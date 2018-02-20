@@ -1,0 +1,14 @@
+.gradle/*
+.idea/*
+build/*
+app.iml
+.project
+.classpath
+.DS_Store
+local.properties
+
+!gradle-wrapper.jar
+
+app/build/*
+app/app.iml
+app/app-app.iml
