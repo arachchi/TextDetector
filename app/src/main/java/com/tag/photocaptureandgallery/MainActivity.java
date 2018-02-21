@@ -10,7 +10,6 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -19,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -26,6 +26,7 @@ import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.takeimage.R;
 
@@ -38,22 +39,23 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class MainActivity extends Activity {
 
-    private int REQUEST_CAMERA = 0, SELECT_FILE = 1;
+    private int SELECT_FILE = 1;
     private Button btnSearch;
 
     private ImageView ivImage;
     private TextView textView;
+    private CheckBox caseSensitive;
+    private CheckBox onlyAlphaNumeric;
+
+    private PopupWindow mPopupWindow;
 
     private String userChoosenTask;
     private TessOCR mTessOCR;
@@ -109,9 +111,13 @@ public class MainActivity extends Activity {
 
         ivImage = findViewById(R.id.ivImage);
         textView = findViewById(R.id.txtView);
+        caseSensitive = findViewById(R.id.caseSensitive);
+        onlyAlphaNumeric = findViewById(R.id.onlyAlphaNumeric);
 
         AssetManager assetManager = getAssets();
         mTessOCR = new TessOCR(MainActivity.this, assetManager);
+
+        keywordsMap = new HashMap<>();
     }
 
     @Override
@@ -131,40 +137,33 @@ public class MainActivity extends Activity {
         switch (requestCode) {
             case Utility.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (userChoosenTask.equals("Take Photo"))
-                        cameraIntent();
-                    else if (userChoosenTask.equals("Choose from Library"))
+                    if (userChoosenTask.equals(PhotoSelection.LIB.description))
                         galleryIntent();
                 } else {
-                    //code for deny
+                    Toast toast = Toast.makeText(getApplicationContext(), R.string.provide_photo_permission, Toast.LENGTH_LONG);
+                    toast.show();
                 }
                 break;
         }
     }
 
     private void selectImage() {
-        final CharSequence[] items = {"Take Photo", "Choose from Library",
-                "Cancel"};
+        final CharSequence[] items = PhotoSelection.getValues();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle("Add Photo!");
+        builder.setTitle(R.string.add_photo_title);
         builder.setItems(items, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int item) {
                 boolean result = Utility.checkPermission(MainActivity.this);
 
-                if (items[item].equals("Take Photo")) {
-                    userChoosenTask = "Take Photo";
-                    if (result) {
-                        cameraIntent();
-                    }
-                } else if (items[item].equals("Choose from Library")) {
-                    userChoosenTask = "Choose from Library";
+                if (items[item].equals(PhotoSelection.LIB.description)) {
+                    userChoosenTask = PhotoSelection.LIB.description;
                     if (result) {
                         galleryIntent();
                     }
 
-                } else if (items[item].equals("Cancel")) {
+                } else if (items[item].equals(PhotoSelection.CNX.description)) {
                     dialog.dismiss();
                 }
             }
@@ -175,15 +174,14 @@ public class MainActivity extends Activity {
     }
 
     private void galleryIntent() {
-        Intent intent = new Intent();
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);//
-        startActivityForResult(Intent.createChooser(intent, "Select File"), SELECT_FILE);
-    }
+        String[] mimeTypes = {"image/jpg", "image/jpeg", "image/png"};
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
 
-    private void cameraIntent() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(intent, REQUEST_CAMERA);
+        String title = getResources().getString(R.string.select_file_title);
+
+        startActivityForResult(Intent.createChooser(intent, title), SELECT_FILE);
     }
 
     @Override
@@ -195,9 +193,8 @@ public class MainActivity extends Activity {
         if (resultCode == Activity.RESULT_OK) {
             if (requestCode == SELECT_FILE) {
                 image = onSelectFromGalleryResult(data);
-            } else if (requestCode == REQUEST_CAMERA) {
-                image = onCaptureImageResult(data);
             } else {
+                textView.setText(R.string.image_no_text);
                 image = null;
             }
             bitmap = image;
@@ -206,35 +203,17 @@ public class MainActivity extends Activity {
         }
 
         if (image != null) {
-            doOCR(image);
+            performFullTextRecognition(image);
         }
     }
 
-    private Bitmap onCaptureImageResult(Intent data) {
-        Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
-
-        StringBuilder fileName = new StringBuilder("img");
-        fileName.append(System.currentTimeMillis()).append(".jpg");
-
-        File destination = new File(Environment.getExternalStorageDirectory(), fileName.toString());
-
-        FileOutputStream fo;
-        try {
-            destination.createNewFile();
-            fo = new FileOutputStream(destination);
-            fo.write(bytes.toByteArray());
-            fo.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+    @Override
+    public void onBackPressed() {
+        if (mPopupWindow != null && mPopupWindow.isShowing()) {
+            mPopupWindow.dismiss();
+        } else {
+            super.onBackPressed();
         }
-
-        ivImage.setImageBitmap(thumbnail);
-
-        return thumbnail;
     }
 
     private Bitmap onSelectFromGalleryResult(Intent data) {
@@ -253,63 +232,87 @@ public class MainActivity extends Activity {
         return bm;
     }
 
-    private void doOCR(final Bitmap bitmap) {
-        final String srcText = mTessOCR.getResults(bitmap);
-        keywordsMap = mTessOCR.getKeywordMap(bitmap);
+    private void performFullTextRecognition(final Bitmap bitmap) {
+        String srcText = mTessOCR.getResults(bitmap);
+
+        if (srcText.isEmpty()) {
+            srcText = getResources().getString(R.string.edit_text_hint);
+        } else {
+            keywordsMap = mTessOCR.getKeywordMap(bitmap);
+        }
+
         textView.setText(srcText);
     }
 
     private void searchText(String input) {
         List<android.graphics.Rect> searchValue = new ArrayList<>();
-        String text = input.replaceAll("[^a-zA-Z ]", " ").trim();
+        String text = this.criteriaBoundText(input);
 
         for (String key : keywordsMap.keySet()) {
-            String formattedKey = key.replaceAll("[^a-zA-Z ]", " ").trim();
-            if (text.equals(formattedKey)) {
+            String formattedKey = this.criteriaBoundText(key);
+            if (text.equals(formattedKey)) {//checking all the values to meet the criteria
                 searchValue.addAll(keywordsMap.get(key));
             }
         }
 
-        this.displayWord(searchValue);
+        if (searchValue.isEmpty()) {
+            String notFoundText = getResources().getString(R.string.search_no_result);
+            if (bitmap == null) {
+                notFoundText = getResources().getString(R.string.edit_text_hint);
+            }
+
+            Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
+            toast.show();
+        } else {
+            this.localizeSearchResult(searchValue);
+        }
     }
 
-    private void displayWord(List<android.graphics.Rect> resultList) {
+    private String criteriaBoundText(String input) {
+        String result = input.trim();
+        if (!caseSensitive.isChecked()) {
+            result = result.toLowerCase();
+        }
+
+        if (onlyAlphaNumeric.isChecked()) {
+            result = result.replaceAll("[^a-zA-Z ]", " ").trim();
+        }
+
+        return result;
+    }
+
+    private void localizeSearchResult(List<android.graphics.Rect> resultList) {
         Utils.bitmapToMat(bitmap, mIntermediateMat);
+        final int lineThickness = 2;
 
         for (android.graphics.Rect sample : resultList) {
-            Log.d("RECT", sample.left + " , " + sample.top + " , " + " , " + sample.right + " , " + sample.bottom);
-            Imgproc.rectangle(
-                    mIntermediateMat,                             //Matrix obj of the image
-                    new Point(sample.left, sample.top),       //p1
-                    new Point(sample.right, sample.bottom),        //p2
-                    CONTOUR_COLOR_HIGHLIGHT,                    //Scalar object for color
-                    1                                   //Thickness of the line
-            );
+            Point pointA = new Point(sample.left, sample.top), pointB = new Point(sample.right, sample.bottom);
+            Imgproc.rectangle(mIntermediateMat, pointA, pointB, CONTOUR_COLOR_HIGHLIGHT, lineThickness);
         }
 
         Bitmap processedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
         Utils.matToBitmap(mIntermediateMat, processedBitmap);
 
-        this.showImage(processedBitmap);
+        this.displaySearchResult(processedBitmap);
 
     }
 
-    private void showImage(Bitmap bitmap) {
+    private void displaySearchResult(Bitmap bitmap) {
         Context mContext = MainActivity.this;
         LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
-        final PopupWindow mPopupWindow;
+
         LinearLayout linearLayout = findViewById(R.id.LinearLayout1);
 
-        // Inflate the custom layout/view
         assert inflater != null;
         View customView = inflater.inflate(R.layout.popup_image, null);
 
-        // Initialize a new instance of popup window
         mPopupWindow = new PopupWindow(
                 customView,
                 RelativeLayout.LayoutParams.WRAP_CONTENT,
                 RelativeLayout.LayoutParams.WRAP_CONTENT
         );
+        mPopupWindow.setOutsideTouchable(true);
+        mPopupWindow.setFocusable(true);
 
         // Set an elevation value for popup window
         // Call requires API level 21
@@ -317,21 +320,17 @@ public class MainActivity extends Activity {
             mPopupWindow.setElevation(5.0f);
         }
 
-        // Get a reference for the custom view close button
         ImageButton closeButton = customView.findViewById(R.id.ib_close);
         ImageView imageView = customView.findViewById(R.id.popupView);
         imageView.setImageBitmap(bitmap);
 
-        // Set a click listener for the popup window close button
         closeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Dismiss the popup window
                 mPopupWindow.dismiss();
             }
         });
 
-        // Finally, show the popup window at the center location of root linear layout
         mPopupWindow.showAtLocation(linearLayout, Gravity.CENTER, 0, 0);
 
     }

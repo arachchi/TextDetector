@@ -4,7 +4,7 @@
     android:id="@+id/rl_custom_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ffffff"
+    android:background="#ece9e9"
     android:padding="2dp">
 
     <ImageView
@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
+        android:layout_below="@+id/ib_close"
         app:srcCompat="@drawable/ic_launcher" />
 
     <ImageButton
@@ -24,4 +24,13 @@
         android:layout_alignParentRight="true"
         android:background="@null"
         android:src="@drawable/ic_close" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/popupView"
+        android:layout_centerHorizontal="true"
+        android:text="Searched Contents are Shown in Red"
+        android:textColor="#ff0000" />
 </RelativeLayout>

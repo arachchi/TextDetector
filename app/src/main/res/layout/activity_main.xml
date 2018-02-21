@@ -1,56 +1,79 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/LinearLayout1"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="10dp" >
+    android:background="#c6c9d6">
 
-    <LinearLayout
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/LinearLayout1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:padding="5dp" >
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="10dp">
 
-        <Button
-            android:id="@+id/btnSelectPhoto"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Photo" />
-    </LinearLayout>
+            android:gravity="center"
+            android:padding="2dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="10dp" >
+            <Button
+                android:id="@+id/btnSelectPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Select Photo" />
+        </LinearLayout>
 
-        <ImageView
-            android:id="@+id/ivImage"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_launcher" />
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <ImageView
+                android:id="@+id/ivImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_launcher" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/txtView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/rect"
+            android:gravity="center"
+            android:text="@string/image_text_hint" />
+
+        <EditText
+            android:id="@+id/searchText"
+            android:layout_width="match_parent"
+            android:layout_height="83dp"
+            android:ems="10"
+            android:hint="@string/edit_text_hint"
+            android:inputType="textAutoComplete" />
+
+        <Button
+            android:id="@+id/btnSeachText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Search" />
+
+        <CheckBox
+            android:id="@+id/caseSensitive"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Case Sensitive" />
+
+        <CheckBox
+            android:id="@+id/onlyAlphaNumeric"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="Only Alpha Numeric" />
+
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/txtView"
-        android:layout_width="match_parent"
-        android:layout_height="136dp"
-        android:text="Text In the Image" />
 
-    <EditText
-        android:id="@+id/searchText"
-        android:layout_width="match_parent"
-        android:layout_height="83dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Text To Search" />
-
-    <Button
-        android:id="@+id/btnSeachText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Search" />
-
-</LinearLayout>
+</ScrollView>

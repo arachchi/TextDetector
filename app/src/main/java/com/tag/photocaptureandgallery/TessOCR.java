@@ -20,16 +20,17 @@ import java.util.Map;
 
 class TessOCR {
     private static final String lang = "eng";
-
     private static final String TAG = "TESSERACT";
 
     private TessBaseAPI mTess;
 
     TessOCR(Context context, AssetManager assetManager) {
-        String DATA_PATH = context.getFilesDir() + "/AndroidOCR/";
-        Log.i(TAG, DATA_PATH);
+        final String DATA_PATH = context.getFilesDir() + File.separator + "AndroidOCR" + File.separator;
+        final String FOLDER = "tessdata";
+        final String FILE_PATH = FOLDER + File.separator + lang + ".traineddata";
+        final String FULL_PATH = DATA_PATH + FILE_PATH;
 
-        String[] paths = new String[]{DATA_PATH, DATA_PATH + "tessdata/"};
+        String[] paths = new String[]{DATA_PATH, DATA_PATH + FOLDER + File.separator};
 
         for (String path : paths) {
             File dir = new File(path);
@@ -43,10 +44,10 @@ class TessOCR {
             }
         }
 
-        if (!(new File(DATA_PATH + "tessdata/" + lang + ".traineddata")).exists()) {
+        if (!(new File(FULL_PATH)).exists()) {
             try {
-                InputStream in = assetManager.open("tessdata/" + lang + ".traineddata");
-                OutputStream out = new FileOutputStream(new File(DATA_PATH + "tessdata/", lang + ".traineddata"));
+                InputStream in = assetManager.open(FILE_PATH);
+                OutputStream out = new FileOutputStream(new File(FULL_PATH));
 
                 byte[] buf = new byte[1024];
                 int len;
@@ -72,7 +73,6 @@ class TessOCR {
 
     String getResults(Bitmap bitmap) {
         mTess.setImage(bitmap);
-
         return mTess.getUTF8Text();
     }
 
@@ -80,16 +80,35 @@ class TessOCR {
         Map<String, List<Rect>> wordMap = new HashMap<>();
         mTess.setImage(bitmap);
         String result = mTess.getUTF8Text();
-        String[] splited = result.split("\\s+");
+        String[] splitedString = result.split("\\s+");
         List<Rect> rectList = mTess.getWords().getBoxRects();
+
+        boolean concatenated = false;
+        String concatenatedString = "";//String ends with - in the previous line to continue until next
+        Rect concatenatedStringRect = null;
 
         int i = 0;
         for (Rect sample : rectList) {
-            if (i < splited.length) {
-                String key = splited[i];
+            if (i < splitedString.length) {
+                String key = splitedString[i];
+
+                if (key.endsWith("-")) {
+                    concatenated = true;
+                    concatenatedStringRect = sample;
+                    concatenatedString = key;
+                    i++;
+                    continue;
+                }
+
                 List<Rect> list = wordMap.get(key);
                 if (list == null) {
                     list = new ArrayList<>();
+                }
+
+                if (concatenated) {
+                    key = concatenatedString.replace("-", "").concat(key);
+                    list.add(concatenatedStringRect);
+                    concatenated = false;
                 }
 
                 list.add(sample);
@@ -98,7 +117,6 @@ class TessOCR {
             } else {
                 Log.i("TAG", "ERROR in processing");
             }
-
 
             i++;
         }
