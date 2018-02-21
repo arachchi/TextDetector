@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Detect Text</string>
-    <string name="hello_world">Hello world!</string>
     <string name="edit_text_hint">Text To Search</string>
     <string name="image_text_hint">Text In the Image</string>
     <string name="search_no_result">Search Content is not present.</string>
@@ -10,7 +9,4 @@
     <string name="select_file_title">Select File</string>
     <string name="add_photo_title">Add Photo!</string>
     <string name="provide_photo_permission">Please provide permission to access.</string>
-
-
-
 </resources>

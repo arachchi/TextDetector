@@ -5,7 +5,7 @@ android {
     buildToolsVersion "27.0.1"
 
     defaultConfig {
-        applicationId "com.example.takeimage"
+        applicationId "com.example.detectText"
         minSdkVersion 14
         targetSdkVersion 27
     }
