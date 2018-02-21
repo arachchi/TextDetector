@@ -1,4 +1,4 @@
-package com.tag.photocaptureandgallery;
+package com.tag.detectText;
 
 import android.Manifest;
 import android.annotation.TargetApi;

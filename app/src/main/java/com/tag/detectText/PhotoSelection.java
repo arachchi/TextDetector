@@ -1,4 +1,4 @@
-package com.tag.photocaptureandgallery;
+package com.tag.detectText;
 
 public enum PhotoSelection {
     LIB("Choose from Library"), CNX("Cancel");
