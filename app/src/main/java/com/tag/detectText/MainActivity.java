@@ -8,13 +8,20 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.hardware.Camera;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -39,8 +46,11 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +112,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onClick(View v) {
+                Utility.hideSoftKeyboard(MainActivity.this);
                 EditText editText = findViewById(R.id.searchText);
                 String searchText = editText.getText().toString();
 
@@ -233,15 +244,8 @@ public class MainActivity extends Activity {
     }
 
     private void performFullTextRecognition(final Bitmap bitmap) {
-        String srcText = mTessOCR.getResults(bitmap);
-
-        if (srcText.isEmpty()) {
-            srcText = getResources().getString(R.string.edit_text_hint);
-        } else {
-            keywordsMap = mTessOCR.getKeywordMap(bitmap);
-        }
-
-        textView.setText(srcText);
+        AsyncTaskRunner runner = new AsyncTaskRunner();
+        runner.execute(bitmap);
     }
 
     private void searchText(String input) {
@@ -258,7 +262,11 @@ public class MainActivity extends Activity {
         if (searchValue.isEmpty()) {
             String notFoundText = getResources().getString(R.string.search_no_result);
             if (bitmap == null) {
-                notFoundText = getResources().getString(R.string.edit_text_hint);
+                notFoundText = getResources().getString(R.string.image_not_found);
+            }
+
+            if (text.isEmpty()) {
+                notFoundText = getResources().getString(R.string.search_text_not_found);
             }
 
             Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
@@ -334,5 +342,42 @@ public class MainActivity extends Activity {
         mPopupWindow.showAtLocation(linearLayout, Gravity.CENTER, 0, 0);
 
     }
+
+    private class AsyncTaskRunner extends AsyncTask<Bitmap, String, String> {
+
+        private String text;
+
+        @Override
+        protected String doInBackground(final Bitmap... bitmap) {
+
+            keywordsMap = mTessOCR.getKeywordMap(bitmap[0]);
+
+            String srcText = mTessOCR.getResults(bitmap[0]);
+            if (srcText.isEmpty()) {
+                srcText = getResources().getString(R.string.edit_text_hint);
+            }
+
+            textView.setText(srcText);
+
+            return srcText;
+        }
+
+
+        @Override
+        protected void onPostExecute(String result) {
+        }
+
+
+        @Override
+        protected void onPreExecute() {
+        }
+
+
+        @Override
+        protected void onProgressUpdate(String... text) {
+
+        }
+    }
+
 }
 

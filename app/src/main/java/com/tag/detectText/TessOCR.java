@@ -18,13 +18,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class TessOCR {
+public class TessOCR {
     private static final String lang = "eng";
     private static final String TAG = "TESSERACT";
 
     private TessBaseAPI mTess;
 
-    TessOCR(Context context, AssetManager assetManager) {
+    public TessOCR(Context context, AssetManager assetManager) {
         final String DATA_PATH = context.getFilesDir() + File.separator + "AndroidOCR" + File.separator;
         final String FOLDER = "tessdata";
         final String FILE_PATH = FOLDER + File.separator + lang + ".traineddata";
@@ -71,7 +71,7 @@ class TessOCR {
 
     }
 
-    String getResults(Bitmap bitmap) {
+    public String getResults(Bitmap bitmap) {
         mTess.setImage(bitmap);
         return mTess.getUTF8Text();
     }

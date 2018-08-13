@@ -10,6 +10,7 @@ import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
+import android.view.inputmethod.InputMethodManager;
 
 class Utility {
     static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 123;
@@ -43,5 +44,12 @@ class Utility {
         } else {
             return true;
         }
+    }
+
+    public static void hideSoftKeyboard(Activity activity) {
+        InputMethodManager manager;
+
+        manager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        manager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
     }
 }

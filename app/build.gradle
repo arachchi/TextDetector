@@ -2,15 +2,17 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 27
-    buildToolsVersion "27.0.1"
+    buildToolsVersion '27.0.3'
 
     defaultConfig {
         applicationId "com.example.detectText"
         minSdkVersion 14
         targetSdkVersion 27
+        setProperty("archivesBaseName", "DetectText")
     }
 
     buildTypes {
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
