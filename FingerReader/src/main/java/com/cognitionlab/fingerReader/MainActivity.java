@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -461,11 +462,17 @@ public class MainActivity extends Activity {
         options.inMutable = true;
         image = BitmapFactory.decodeByteArray(data, 0, data.length, options);
 
-        bitmap = image;
-        ivImage.setImageBitmap(image);
+        Matrix matrix = new Matrix();
+        matrix.postRotate(90);
+
+        bm = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
+
+
+        bitmap = bm;
+        ivImage.setImageBitmap(bm);
 
         if (image != null) {
-            performFullTextRecognition(image);
+            performFullTextRecognition(bm);
         }
 
         return bm;

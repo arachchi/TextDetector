@@ -65,6 +65,7 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
     public void setCamera(Camera camera) {
         //method to set a camera instance
         mCamera = camera;
+        mCamera.setDisplayOrientation(90);
         Camera.Parameters params = mCamera.getParameters();
         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
         params.set("orientation", "portrait");
