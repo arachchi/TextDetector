@@ -1,2 +1,2 @@
-include ':app'
+include ':FingerReader'
 include ':openCVLibrary340'
