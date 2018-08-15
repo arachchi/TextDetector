@@ -10,12 +10,15 @@ import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.hardware.Camera;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Gravity;
@@ -42,6 +45,7 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
@@ -360,32 +364,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void selectImage() {
-        final CharSequence[] items = PhotoSelection.getValues();
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle(R.string.add_photo_title);
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int item) {
-                boolean result = Utility.checkPermission(MainActivity.this);
-
-                if (items[item].equals(PhotoSelection.LIB.description)) {
-                    userChoosenTask = PhotoSelection.LIB.description;
-                    if (result) {
-                        galleryIntent();
-                    }
-
-                } else if (items[item].equals(PhotoSelection.CNX.description)) {
-                    dialog.dismiss();
-                }
-            }
-        });
-        builder.show();
-
-
-    }
-
     private void galleryIntent() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("image/*");
@@ -401,23 +379,6 @@ public class MainActivity extends Activity {
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        final Bitmap image;
-
-        if (resultCode == Activity.RESULT_OK) {
-            if (requestCode == SELECT_FILE) {
-                image = onSelectFromGalleryResult(data);
-            } else {
-                textView.setText(R.string.image_no_text);
-                image = null;
-            }
-            bitmap = image;
-        } else {
-            image = null;
-        }
-
-        if (image != null) {
-            performFullTextRecognition(image);
-        }
     }
 
     @Override
@@ -438,22 +399,6 @@ public class MainActivity extends Activity {
         releaseCamera();
     }
 
-    private Bitmap onSelectFromGalleryResult(Intent data) {
-
-        Bitmap bm = null;
-        if (data != null) {
-            try {
-                bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        bitmap = bm;
-        ivImage.setImageBitmap(bm);
-
-        return bm;
-    }
-
     private Bitmap setImageFromCamera(byte[] data) {
 
         Bitmap image = null, bm = null;
@@ -467,6 +412,8 @@ public class MainActivity extends Activity {
 
         bm = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
 
+        bm = toGrayScale(bm);
+        bm = toReducedSize(bm);
 
         bitmap = bm;
         ivImage.setImageBitmap(bm);
@@ -480,7 +427,7 @@ public class MainActivity extends Activity {
 
     private void performFullTextRecognition(final Bitmap bitmap) {
         AsyncTaskRunner runner = new AsyncTaskRunner();
-        runner.execute(bitmap);
+        runner.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, bitmap);
     }
 
     private void searchText(String input) {
@@ -580,14 +527,18 @@ public class MainActivity extends Activity {
 
     private class AsyncTaskRunner extends AsyncTask<Bitmap, String, String> {
 
-        private String text;
-
         @Override
         protected String doInBackground(final Bitmap... bitmap) {
 
-            keywordsMap = mTessOCR.getKeywordMap(bitmap[0]);
-
+            Log.i("TIME", "Text Extraction Started Time +" + new Date());
             final String srcText = mTessOCR.getResults(bitmap[0]);
+            Log.i("TIME", "Text Extraction End Time +" + new Date());
+
+            Log.i("TIME", "Keyword Map Creation Started Time +" + new Date());
+            keywordsMap = mTessOCR.getKeywordMap(srcText);
+            Log.i("TIME", "Keyword Map Creation End Time +" + new Date());
+
+            Log.i("TIME", "Text Setting Started Time +" + new Date());
             if (srcText.isEmpty()) {
                 runOnUiThread(new Runnable() {
                                   @Override
@@ -605,7 +556,7 @@ public class MainActivity extends Activity {
                               }
                 );
             }
-
+            Log.i("TIME", "Text Setting End Time +" + new Date());
 
             return srcText;
         }
@@ -634,6 +585,33 @@ public class MainActivity extends Activity {
         } else {
             return false;
         }
+    }
+
+    public Bitmap toGrayScale(Bitmap bmpOriginal) {
+        int width, height;
+        height = bmpOriginal.getHeight();
+        width = bmpOriginal.getWidth();
+
+        Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmpGrayscale);
+        Paint paint = new Paint();
+        ColorMatrix cm = new ColorMatrix();
+        cm.setSaturation(0);
+        ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+        paint.setColorFilter(f);
+        c.drawBitmap(bmpOriginal, 0, 0, paint);
+        return bmpGrayscale;
+    }
+
+    public Bitmap toReducedSize(Bitmap bitmap) {
+        Utils.bitmapToMat(bitmap, mIntermediateMat);
+        Rect rect = new Rect(bitmap.getWidth() / 6, bitmap.getHeight() / 3,
+                (bitmap.getWidth() * 2) / 3, ((bitmap.getHeight() * 1) / 3));
+        mIntermediateMat = new Mat(mIntermediateMat, rect);
+        Bitmap processedBitmap = Bitmap.createBitmap(rect.width, rect.height, bitmap.getConfig());
+        Utils.matToBitmap(mIntermediateMat, processedBitmap);
+
+        return processedBitmap;
     }
 
 }

@@ -76,10 +76,8 @@ public class TessOCR {
         return mTess.getUTF8Text();
     }
 
-    Map<String, List<Rect>> getKeywordMap(Bitmap bitmap) {
+    Map<String, List<Rect>> getKeywordMap(String result) {
         Map<String, List<Rect>> wordMap = new HashMap<>();
-        mTess.setImage(bitmap);
-        String result = mTess.getUTF8Text();
         String[] splitedString = result.split("\\s+");
         List<Rect> rectList = mTess.getWords().getBoxRects();
 

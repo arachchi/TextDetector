@@ -9,6 +9,11 @@ android {
         minSdkVersion 14
         targetSdkVersion 27
         setProperty("archivesBaseName", "DetectText")
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath true
+            }
+        }
     }
 
     buildTypes {
@@ -21,8 +26,12 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:27.0.1'
-    compile 'com.rmtheis:tess-two:6.0.0'
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile project(':openCVLibrary340')
+    implementation 'com.android.support:appcompat-v7:27.0.1'
+    implementation 'com.rmtheis:tess-two:6.0.0'
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.jakewharton:butterknife:8.8.1'
+    annotationProcessor group: 'com.jakewharton', name: 'butterknife-compiler', version: '8.8.1'
+    implementation 'com.google.dagger:dagger-android:2.17'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.17'
+    implementation project(path: ':openCVLibrary340')
 }

@@ -12,7 +12,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.view.inputmethod.InputMethodManager;
 
-class Utility {
+public class Utility {
     static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 123;
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
