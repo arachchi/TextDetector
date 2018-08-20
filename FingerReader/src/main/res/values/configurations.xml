@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="UI_ENABLED">true</bool><!-->true or false<-->
+    <string name="CAMERA_TYPE"></string><!-->INBUILT_CAMERA or USB_CAMERA<-->
+
+</resources>

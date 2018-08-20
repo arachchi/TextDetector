@@ -23,7 +23,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
+
+def AAVersion = '4.4.0'
 
 dependencies {
     implementation 'com.android.support:appcompat-v7:27.0.1'
@@ -31,7 +37,13 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor group: 'com.jakewharton', name: 'butterknife-compiler', version: '8.8.1'
+    implementation 'com.google.dagger:dagger:2.17'
     implementation 'com.google.dagger:dagger-android:2.17'
+    annotationProcessor 'com.google.dagger:dagger-android-processor:2.17'
     annotationProcessor 'com.google.dagger:dagger-compiler:2.17'
     implementation project(path: ':openCVLibrary340')
+    annotationProcessor "org.androidannotations:androidannotations:$AAVersion"
+    implementation "org.androidannotations:androidannotations-api:$AAVersion"
+    compileOnly 'org.projectlombok:lombok:1.18.2'
+    annotationProcessor 'org.projectlombok:lombok:1.18.2'
 }

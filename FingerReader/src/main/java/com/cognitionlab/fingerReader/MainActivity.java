@@ -2,23 +2,14 @@ package com.cognitionlab.fingerReader;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.hardware.Camera;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Gravity;
@@ -37,28 +28,25 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cognitionlab.fingerReader.dtos.SearchDTO;
+import com.cognitionlab.fingerReader.services.ProcessingService;
+import com.cognitionlab.fingerReader.services.helpers.ContentObserver;
+import com.cognitionlab.fingerReader.services.modules.processing.DaggerProcessingServiceComponent;
 import com.example.detectText.R;
 
-import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import javax.inject.Inject;
+
+import butterknife.OnClick;
 
 public class MainActivity extends Activity {
 
@@ -66,6 +54,7 @@ public class MainActivity extends Activity {
     private Button btnSearch;
 
     private ImageView ivImage;
+
     private TextView textView;
     private CheckBox caseSensitive;
     private CheckBox onlyAlphaNumeric;
@@ -73,49 +62,27 @@ public class MainActivity extends Activity {
     private PopupWindow mPopupWindow;
 
     private String userChoosenTask;
-    private TessOCR mTessOCR;
 
-    private Mat mIntermediateMat;
-    private Scalar CONTOUR_COLOR_HIGHLIGHT = new Scalar(255, 0, 0, 255);
     private Bitmap bitmap;
-    private Map<String, List<android.graphics.Rect>> keywordsMap;
-
-    private Camera mCamera;
     private CameraPreview mPreview;
     private Camera.PictureCallback mPicture;
-    private Button capture, switchCamera;
+
+    private Button buttonCapture, buttonChangeCamera;
     private Context myContext;
+
     private LinearLayout cameraPreview;
-    private boolean cameraFront = false;
+    private ContentObserver contentObserver;
 
-    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
-        @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS: {
-                    Log.i("OpenCV", "OpenCV loaded successfully");
-
-                    mIntermediateMat = new Mat();
-                }
-                break;
-                default: {
-                    super.onManagerConnected(status);
-                }
-                break;
-            }
-        }
-    };
+    @Inject
+    ProcessingService processingService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
-            }
-        }
+        processingService = DaggerProcessingServiceComponent.builder().build().provideProcessingService();
+        this.requestPermissions();
 
         setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -124,133 +91,78 @@ public class MainActivity extends Activity {
 
         btnSearch = findViewById(R.id.btnSeachText);
 
-        btnSearch.setOnClickListener(new OnClickListener() {
+        btnSearch.setOnClickListener((View v) -> {
+                    Utility.hideSoftKeyboard(MainActivity.this);
+                    EditText editText = findViewById(R.id.searchText);
+                    String searchText = editText.getText().toString();
+                    String notFoundText = getResources().getString(R.string.search_no_result);
+                    if (bitmap == null) {
+                        notFoundText = getResources().getString(R.string.image_not_found);
 
-            @Override
-            public void onClick(View v) {
-                Utility.hideSoftKeyboard(MainActivity.this);
-                EditText editText = findViewById(R.id.searchText);
-                String searchText = editText.getText().toString();
+                        Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
+                        toast.show();
+                    } else if (searchText.isEmpty()) {
+                        notFoundText = getResources().getString(R.string.search_text_not_found);
+                        Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
+                        toast.show();
+                    } else {
+                        SearchDTO searchDTO = new SearchDTO();
+                        searchDTO.setBitmap(bitmap);
+                        searchDTO.setInput(searchText);
+                        searchDTO.setCaseSensitive(caseSensitive.isChecked());
+                        searchDTO.setOnlyAlphaNumeric(onlyAlphaNumeric.isChecked());
 
-                searchText(searchText);
-            }
-        });
+                        Bitmap processedBitmap = processingService.searchText(searchDTO);
+                        if (processedBitmap != null) {
+                            displaySearchResult(processedBitmap);
+                        }
+                    }
+                }
+        );
 
         ivImage = findViewById(R.id.ivImage);
         textView = findViewById(R.id.txtView);
         caseSensitive = findViewById(R.id.caseSensitive);
         onlyAlphaNumeric = findViewById(R.id.onlyAlphaNumeric);
+        processingService.setTessOCR(MainActivity.this, getAssets());
+        this.contentObserver = new ContentObserver(bitmap, textView);
+        processingService.addProcessingContentObserver(this.contentObserver);
 
-        AssetManager assetManager = getAssets();
-        mTessOCR = new TessOCR(MainActivity.this, assetManager);
+    }
 
-        keywordsMap = new HashMap<>();
+    @OnClick(R.id.btnSeachText)
+    void searchText() {
+
+    }
+
+    private void requestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
+            }
+        }
     }
 
     public void initialize() {
-        cameraPreview = (LinearLayout) findViewById(R.id.camera_preview);
-        mPreview = new CameraPreview(myContext, mCamera);
+        cameraPreview = (LinearLayout) findViewById(R.id.cameraPreview);
+        mPreview = processingService.getCameraPreview(myContext);
         cameraPreview.addView(mPreview);
 
-        capture = (Button) findViewById(R.id.button_capture);
-        capture.setOnClickListener(captureListener);
+        buttonCapture = (Button) findViewById(R.id.buttonCapture);
+        buttonCapture.setOnClickListener(captureListener);
 
-        switchCamera = (Button) findViewById(R.id.button_ChangeCamera);
-        switchCamera.setOnClickListener(switchCameraListener);
+        buttonChangeCamera = (Button) findViewById(R.id.buttonChangeCamera);
+        buttonChangeCamera.setOnClickListener(switchCameraListener);
     }
 
     OnClickListener switchCameraListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            //get the number of cameras
-            int camerasNumber = Camera.getNumberOfCameras();
-            if (camerasNumber > 1) {
-                //release the old camera instance
-                //switch camera, from the front and the back and vice versa
-
-                releaseCamera();
-                chooseCamera();
-            } else {
-                Toast toast = Toast.makeText(myContext, "Sorry, your phone has only one camera!", Toast.LENGTH_LONG);
-                toast.show();
-            }
+            String message = processingService.selectCamera();
+            Toast toast = Toast.makeText(myContext, message, Toast.LENGTH_LONG);
+            toast.show();
         }
     };
-
-    private int findFrontFacingCamera() {
-        int cameraId = -1;
-        // Search for the front facing camera
-        int numberOfCameras = Camera.getNumberOfCameras();
-        for (int i = 0; i < numberOfCameras; i++) {
-            Camera.CameraInfo info = new Camera.CameraInfo();
-            Camera.getCameraInfo(i, info);
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                cameraId = i;
-                cameraFront = true;
-                break;
-            }
-        }
-        return cameraId;
-    }
-
-    private int findBackFacingCamera() {
-        int cameraId = -1;
-        //Search for the back facing camera
-        //get the number of cameras
-        int numberOfCameras = Camera.getNumberOfCameras();
-        //for every camera check
-        for (int i = 0; i < numberOfCameras; i++) {
-            Camera.CameraInfo info = new Camera.CameraInfo();
-            Camera.getCameraInfo(i, info);
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_BACK) {
-                cameraId = i;
-                cameraFront = false;
-                break;
-            }
-        }
-        return cameraId;
-    }
-
-    public void chooseCamera() {
-        //if the camera preview is the front
-        if (cameraFront) {
-            int cameraId = findBackFacingCamera();
-            if (cameraId >= 0) {
-                //open the backFacingCamera
-                //set a picture callback
-                //refresh the preview
-
-                mCamera = Camera.open(cameraId);
-
-                Camera.Parameters params = mCamera.getParameters();
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                params.set("orientation", "portrait");
-                mCamera.setParameters(params);
-
-                mPicture = getPictureCallback();
-                mPreview.refreshCamera(mCamera);
-            }
-        } else {
-            int cameraId = findFrontFacingCamera();
-            if (cameraId >= 0) {
-                //open the backFacingCamera
-                //set a picture callback
-                //refresh the preview
-
-                mCamera = Camera.open(cameraId);
-
-                Camera.Parameters params = mCamera.getParameters();
-                params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-                params.set("orientation", "portrait");
-                mCamera.setParameters(params);
-
-                mPicture = getPictureCallback();
-                mPreview.refreshCamera(mCamera);
-            }
-        }
-
-
-    }
 
     private Camera.PictureCallback getPictureCallback() {
         Camera.PictureCallback picture = new Camera.PictureCallback() {
@@ -278,7 +190,7 @@ public class MainActivity extends Activity {
                 }
 
                 //refresh camera to continue preview
-                mPreview.refreshCamera(mCamera);
+                mPreview.refreshCamera(processingService.getCamera());
             }
         };
         return picture;
@@ -287,7 +199,7 @@ public class MainActivity extends Activity {
     OnClickListener captureListener = new OnClickListener() {
         @Override
         public void onClick(View v) {
-            mCamera.takePicture(null, null, mPicture);
+            processingService.getCamera().takePicture(null, null, mPicture);
         }
     };
 
@@ -313,40 +225,24 @@ public class MainActivity extends Activity {
         return mediaFile;
     }
 
-    private void releaseCamera() {
-        // stop and release camera
-        if (mCamera != null) {
-            mCamera.release();
-            mCamera = null;
-        }
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
+
+        processingService.setTessOCR(MainActivity.this, getAssets());
+
         if (!OpenCVLoader.initDebug()) {
             Log.d("OpenCV", "Internal OpenCV library not found. Using OpenCV Manager for initialization");
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION, this, processingService.getLoaderCallbackForOpenCV());
         } else {
             Log.d("OpenCV", "OpenCV library found inside package. Using it!");
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+            processingService.getLoaderCallbackForOpenCV().onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
 
-        if (!hasCamera(myContext)) {
-            Toast toast = Toast.makeText(myContext, "Sorry, your phone does not have a camera!", Toast.LENGTH_LONG);
-            toast.show();
-            finish();
-        }
-        if (mCamera == null) {
-            //if the front facing camera does not exist
-            if (findFrontFacingCamera() < 0) {
-                Toast.makeText(this, "No front facing camera found.", Toast.LENGTH_LONG).show();
-                switchCamera.setVisibility(View.GONE);
-            }
-            mCamera = Camera.open(findBackFacingCamera());
-            mPicture = getPictureCallback();
-            mPreview.refreshCamera(mCamera);
-        }
+        Camera camera = processingService.getCamera();
+        mPicture = getPictureCallback();
+        mPreview.refreshCamera(camera);
+
     }
 
     @Override
@@ -389,102 +285,27 @@ public class MainActivity extends Activity {
             super.onBackPressed();
         }
 
-        releaseCamera();
+        processingService.releaseCamera();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         //when on Pause, release camera in order to be used from other applications
-        releaseCamera();
+        processingService.releaseCamera();
     }
 
     private Bitmap setImageFromCamera(byte[] data) {
 
-        Bitmap image = null, bm = null;
-
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inMutable = true;
-        image = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-
-        Matrix matrix = new Matrix();
-        matrix.postRotate(90);
-
-        bm = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
-
-        bm = toGrayScale(bm);
-        bm = toReducedSize(bm);
-
+        Bitmap bm = processingService.getDisplayImage(data);
         bitmap = bm;
         ivImage.setImageBitmap(bm);
 
-        if (image != null) {
-            performFullTextRecognition(bm);
+        if (bm != null) {
+            processingService.fullTextRecognition(bm);
         }
 
         return bm;
-    }
-
-    private void performFullTextRecognition(final Bitmap bitmap) {
-        AsyncTaskRunner runner = new AsyncTaskRunner();
-        runner.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, bitmap);
-    }
-
-    private void searchText(String input) {
-        List<android.graphics.Rect> searchValue = new ArrayList<>();
-        String text = this.criteriaBoundText(input);
-
-        for (String key : keywordsMap.keySet()) {
-            String formattedKey = this.criteriaBoundText(key);
-            if (text.equals(formattedKey)) {//checking all the values to meet the criteria
-                searchValue.addAll(keywordsMap.get(key));
-            }
-        }
-
-        if (searchValue.isEmpty()) {
-            String notFoundText = getResources().getString(R.string.search_no_result);
-            if (bitmap == null) {
-                notFoundText = getResources().getString(R.string.image_not_found);
-            }
-
-            if (text.isEmpty()) {
-                notFoundText = getResources().getString(R.string.search_text_not_found);
-            }
-
-            Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
-            toast.show();
-        } else {
-            this.localizeSearchResult(searchValue);
-        }
-    }
-
-    private String criteriaBoundText(String input) {
-        String result = input.trim();
-        if (!caseSensitive.isChecked()) {
-            result = result.toLowerCase();
-        }
-
-        if (onlyAlphaNumeric.isChecked()) {
-            result = result.replaceAll("[^a-zA-Z ]", " ").trim();
-        }
-
-        return result;
-    }
-
-    private void localizeSearchResult(List<android.graphics.Rect> resultList) {
-        Utils.bitmapToMat(bitmap, mIntermediateMat);
-        final int lineThickness = 10;
-
-        for (android.graphics.Rect sample : resultList) {
-            Point pointA = new Point(sample.left, sample.top), pointB = new Point(sample.right, sample.bottom);
-            Imgproc.rectangle(mIntermediateMat, pointA, pointB, CONTOUR_COLOR_HIGHLIGHT, lineThickness);
-        }
-
-        Bitmap processedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
-        Utils.matToBitmap(mIntermediateMat, processedBitmap);
-
-        this.displaySearchResult(processedBitmap);
-
     }
 
     private void displaySearchResult(Bitmap bitmap) {
@@ -523,95 +344,6 @@ public class MainActivity extends Activity {
 
         mPopupWindow.showAtLocation(linearLayout, Gravity.CENTER, 0, 0);
 
-    }
-
-    private class AsyncTaskRunner extends AsyncTask<Bitmap, String, String> {
-
-        @Override
-        protected String doInBackground(final Bitmap... bitmap) {
-
-            Log.i("TIME", "Text Extraction Started Time +" + new Date());
-            final String srcText = mTessOCR.getResults(bitmap[0]);
-            Log.i("TIME", "Text Extraction End Time +" + new Date());
-
-            Log.i("TIME", "Keyword Map Creation Started Time +" + new Date());
-            keywordsMap = mTessOCR.getKeywordMap(srcText);
-            Log.i("TIME", "Keyword Map Creation End Time +" + new Date());
-
-            Log.i("TIME", "Text Setting Started Time +" + new Date());
-            if (srcText.isEmpty()) {
-                runOnUiThread(new Runnable() {
-                                  @Override
-                                  public void run() {
-                                      textView.setText(getResources().getString(R.string.edit_text_hint));
-                                  }
-                              }
-                );
-            } else {
-                runOnUiThread(new Runnable() {
-                                  @Override
-                                  public void run() {
-                                      textView.setText(srcText);
-                                  }
-                              }
-                );
-            }
-            Log.i("TIME", "Text Setting End Time +" + new Date());
-
-            return srcText;
-        }
-
-
-        @Override
-        protected void onPostExecute(String result) {
-        }
-
-
-        @Override
-        protected void onPreExecute() {
-        }
-
-
-        @Override
-        protected void onProgressUpdate(String... text) {
-
-        }
-    }
-
-    private boolean hasCamera(Context context) {
-        //check if the device has camera
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public Bitmap toGrayScale(Bitmap bmpOriginal) {
-        int width, height;
-        height = bmpOriginal.getHeight();
-        width = bmpOriginal.getWidth();
-
-        Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(bmpGrayscale);
-        Paint paint = new Paint();
-        ColorMatrix cm = new ColorMatrix();
-        cm.setSaturation(0);
-        ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
-        paint.setColorFilter(f);
-        c.drawBitmap(bmpOriginal, 0, 0, paint);
-        return bmpGrayscale;
-    }
-
-    public Bitmap toReducedSize(Bitmap bitmap) {
-        Utils.bitmapToMat(bitmap, mIntermediateMat);
-        Rect rect = new Rect(bitmap.getWidth() / 6, bitmap.getHeight() / 3,
-                (bitmap.getWidth() * 2) / 3, ((bitmap.getHeight() * 1) / 3));
-        mIntermediateMat = new Mat(mIntermediateMat, rect);
-        Bitmap processedBitmap = Bitmap.createBitmap(rect.width, rect.height, bitmap.getConfig());
-        Utils.matToBitmap(mIntermediateMat, processedBitmap);
-
-        return processedBitmap;
     }
 
 }
