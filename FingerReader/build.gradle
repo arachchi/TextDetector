@@ -36,7 +36,7 @@ dependencies {
     implementation 'com.rmtheis:tess-two:6.0.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.jakewharton:butterknife:8.8.1'
-    annotationProcessor group: 'com.jakewharton', name: 'butterknife-compiler', version: '8.8.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
     implementation 'com.google.dagger:dagger:2.17'
     implementation 'com.google.dagger:dagger-android:2.17'
     annotationProcessor 'com.google.dagger:dagger-android-processor:2.17'

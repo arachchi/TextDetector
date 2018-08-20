@@ -16,7 +16,7 @@ public interface ProcessingService {
 
     CameraPreview getCameraPreview(Context context);
 
-    String selectCamera();
+    Camera selectCamera() throws Exception;
 
     void releaseCamera();
 

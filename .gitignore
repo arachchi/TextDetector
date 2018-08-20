@@ -65,3 +65,4 @@ app/build/*
 app/app.iml
 app/app-app.iml
 openCVLibrary340/build/*
+openCVLibrary340/build*

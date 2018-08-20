@@ -9,6 +9,7 @@ import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.cognitionlab.fingerReader.CameraPreview;
@@ -84,18 +85,16 @@ public class CameraServiceImpl implements CameraService {
         return cameraId;
     }
 
-    public String selectCamera() {
-        String message;
+    public Camera selectCamera() throws Exception {
         int camerasNumber = Camera.getNumberOfCameras();
         if (camerasNumber > 1) {
             releaseCamera();
             chooseCamera();
-            message = "Camera Select Successfully.";
+            Log.i("CAMERA", "Camera Select Successfully.");
+            return mCamera;
         } else {
-            message = "Sorry, your phone has only one camera!";
+            throw new Exception("Sorry, your phone has only one camera!");
         }
-
-        return message;
     }
 
     public void chooseCamera() {

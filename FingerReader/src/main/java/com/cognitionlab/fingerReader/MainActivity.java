@@ -9,7 +9,6 @@ import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Gravity;
@@ -46,32 +45,39 @@ import java.util.Date;
 
 import javax.inject.Inject;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class MainActivity extends Activity {
 
     private int SELECT_FILE = 1;
-    private Button btnSearch;
 
-    private ImageView ivImage;
-
-    private TextView textView;
-    private CheckBox caseSensitive;
-    private CheckBox onlyAlphaNumeric;
+    @BindView(R.id.ivImage)
+    ImageView ivImage;
+    @BindView(R.id.btnSeachText)
+    Button btnSearch;
+    @BindView(R.id.txtView)
+    TextView textView;
+    @BindView(R.id.caseSensitive)
+    CheckBox caseSensitive;
+    @BindView(R.id.onlyAlphaNumeric)
+    CheckBox onlyAlphaNumeric;
+    @BindView(R.id.buttonCapture)
+    Button buttonCapture;
+    @BindView(R.id.buttonChangeCamera)
+    Button buttonChangeCamera;
+    @BindView(R.id.cameraPreview)
+    LinearLayout cameraPreview;
 
     private PopupWindow mPopupWindow;
 
     private String userChoosenTask;
-
     private Bitmap bitmap;
-    private CameraPreview mPreview;
     private Camera.PictureCallback mPicture;
-
-    private Button buttonCapture, buttonChangeCamera;
     private Context myContext;
-
-    private LinearLayout cameraPreview;
     private ContentObserver contentObserver;
+    private CameraPreview mPreview;
 
     @Inject
     ProcessingService processingService;
@@ -80,50 +86,17 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        ButterKnife.setDebug(true);
 
         processingService = DaggerProcessingServiceComponent.builder().build().provideProcessingService();
         this.requestPermissions();
 
-        setContentView(R.layout.activity_main);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         myContext = this;
-        initialize();
+        mPreview = processingService.getCameraPreview(myContext);
+        cameraPreview.addView(mPreview);
 
-        btnSearch = findViewById(R.id.btnSeachText);
-
-        btnSearch.setOnClickListener((View v) -> {
-                    Utility.hideSoftKeyboard(MainActivity.this);
-                    EditText editText = findViewById(R.id.searchText);
-                    String searchText = editText.getText().toString();
-                    String notFoundText = getResources().getString(R.string.search_no_result);
-                    if (bitmap == null) {
-                        notFoundText = getResources().getString(R.string.image_not_found);
-
-                        Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
-                        toast.show();
-                    } else if (searchText.isEmpty()) {
-                        notFoundText = getResources().getString(R.string.search_text_not_found);
-                        Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
-                        toast.show();
-                    } else {
-                        SearchDTO searchDTO = new SearchDTO();
-                        searchDTO.setBitmap(bitmap);
-                        searchDTO.setInput(searchText);
-                        searchDTO.setCaseSensitive(caseSensitive.isChecked());
-                        searchDTO.setOnlyAlphaNumeric(onlyAlphaNumeric.isChecked());
-
-                        Bitmap processedBitmap = processingService.searchText(searchDTO);
-                        if (processedBitmap != null) {
-                            displaySearchResult(processedBitmap);
-                        }
-                    }
-                }
-        );
-
-        ivImage = findViewById(R.id.ivImage);
-        textView = findViewById(R.id.txtView);
-        caseSensitive = findViewById(R.id.caseSensitive);
-        onlyAlphaNumeric = findViewById(R.id.onlyAlphaNumeric);
         processingService.setTessOCR(MainActivity.this, getAssets());
         this.contentObserver = new ContentObserver(bitmap, textView);
         processingService.addProcessingContentObserver(this.contentObserver);
@@ -132,7 +105,31 @@ public class MainActivity extends Activity {
 
     @OnClick(R.id.btnSeachText)
     void searchText() {
+        Utility.hideSoftKeyboard(MainActivity.this);
+        EditText editText = findViewById(R.id.searchText);
+        String searchText = editText.getText().toString();
+        String notFoundText;
+        if (bitmap == null) {
+            notFoundText = getResources().getString(R.string.image_not_found);
 
+            Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
+            toast.show();
+        } else if (searchText.isEmpty()) {
+            notFoundText = getResources().getString(R.string.search_text_not_found);
+            Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
+            toast.show();
+        } else {
+            SearchDTO searchDTO = new SearchDTO();
+            searchDTO.setBitmap(bitmap);
+            searchDTO.setInput(searchText);
+            searchDTO.setCaseSensitive(caseSensitive.isChecked());
+            searchDTO.setOnlyAlphaNumeric(onlyAlphaNumeric.isChecked());
+
+            Bitmap processedBitmap = processingService.searchText(searchDTO);
+            if (processedBitmap != null) {
+                displaySearchResult(processedBitmap);
+            }
+        }
     }
 
     private void requestPermissions() {
@@ -143,26 +140,18 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void initialize() {
-        cameraPreview = (LinearLayout) findViewById(R.id.cameraPreview);
-        mPreview = processingService.getCameraPreview(myContext);
-        cameraPreview.addView(mPreview);
-
-        buttonCapture = (Button) findViewById(R.id.buttonCapture);
-        buttonCapture.setOnClickListener(captureListener);
-
-        buttonChangeCamera = (Button) findViewById(R.id.buttonChangeCamera);
-        buttonChangeCamera.setOnClickListener(switchCameraListener);
-    }
-
-    OnClickListener switchCameraListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            String message = processingService.selectCamera();
-            Toast toast = Toast.makeText(myContext, message, Toast.LENGTH_LONG);
-            toast.show();
+    @OnClick(R.id.buttonChangeCamera)
+    void switchCamera() {
+        String message = "Camera Selected Successfully";
+        try {
+            Camera camera = processingService.selectCamera();
+            mPreview.refreshCamera(camera);
+        } catch (Exception e) {
+            message = e.getMessage();
         }
-    };
+        Toast toast = Toast.makeText(myContext, message, Toast.LENGTH_LONG);
+        toast.show();
+    }
 
     private Camera.PictureCallback getPictureCallback() {
         Camera.PictureCallback picture = new Camera.PictureCallback() {
@@ -196,12 +185,10 @@ public class MainActivity extends Activity {
         return picture;
     }
 
-    OnClickListener captureListener = new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            processingService.getCamera().takePicture(null, null, mPicture);
-        }
-    };
+    @OnClick(R.id.buttonCapture)
+    void imageCapture() {
+        processingService.getCamera().takePicture(null, null, mPicture);
+    }
 
     //make picture and save to a folder
     private static File getOutputMediaFile() {
@@ -335,11 +322,8 @@ public class MainActivity extends Activity {
         ImageView imageView = customView.findViewById(R.id.popupView);
         imageView.setImageBitmap(bitmap);
 
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mPopupWindow.dismiss();
-            }
+        closeButton.setOnClickListener((View view) -> {
+            mPopupWindow.dismiss();
         });
 
         mPopupWindow.showAtLocation(linearLayout, Gravity.CENTER, 0, 0);
