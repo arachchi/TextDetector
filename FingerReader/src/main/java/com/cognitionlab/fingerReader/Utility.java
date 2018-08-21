@@ -48,7 +48,6 @@ public class Utility {
 
     public static void hideSoftKeyboard(Activity activity) {
         InputMethodManager manager;
-
         manager = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
         manager.hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
     }

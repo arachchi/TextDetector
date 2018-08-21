@@ -9,12 +9,10 @@ import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -69,6 +67,8 @@ public class MainActivity extends Activity {
     Button buttonChangeCamera;
     @BindView(R.id.cameraPreview)
     LinearLayout cameraPreview;
+    @BindView(R.id.searchText)
+    EditText editText;
 
     private PopupWindow mPopupWindow;
 
@@ -106,18 +106,11 @@ public class MainActivity extends Activity {
     @OnClick(R.id.btnSeachText)
     void searchText() {
         Utility.hideSoftKeyboard(MainActivity.this);
-        EditText editText = findViewById(R.id.searchText);
         String searchText = editText.getText().toString();
-        String notFoundText;
         if (bitmap == null) {
-            notFoundText = getResources().getString(R.string.image_not_found);
-
-            Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
-            toast.show();
+            this.showToast(getResources().getString(R.string.image_not_found));
         } else if (searchText.isEmpty()) {
-            notFoundText = getResources().getString(R.string.search_text_not_found);
-            Toast toast = Toast.makeText(getApplicationContext(), notFoundText, Toast.LENGTH_LONG);
-            toast.show();
+            this.showToast(getResources().getString(R.string.search_text_not_found));
         } else {
             SearchDTO searchDTO = new SearchDTO();
             searchDTO.setBitmap(bitmap);
@@ -149,8 +142,8 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             message = e.getMessage();
         }
-        Toast toast = Toast.makeText(myContext, message, Toast.LENGTH_LONG);
-        toast.show();
+
+        this.showToast(message);
     }
 
     private Camera.PictureCallback getPictureCallback() {
@@ -233,32 +226,6 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case Utility.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (userChoosenTask.equals(PhotoSelection.LIB.description))
-                        galleryIntent();
-                } else {
-                    Toast toast = Toast.makeText(getApplicationContext(), R.string.provide_photo_permission, Toast.LENGTH_LONG);
-                    toast.show();
-                }
-                break;
-        }
-    }
-
-    private void galleryIntent() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("image/*");
-        String[] mimeTypes = {"image/jpg", "image/jpeg", "image/png"};
-        intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-
-        String title = getResources().getString(R.string.select_file_title);
-
-        startActivityForResult(Intent.createChooser(intent, title), SELECT_FILE);
-    }
-
-    @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -328,6 +295,10 @@ public class MainActivity extends Activity {
 
         mPopupWindow.showAtLocation(linearLayout, Gravity.CENTER, 0, 0);
 
+    }
+
+    private void showToast(String text) {
+        Toast.makeText(myContext, text, Toast.LENGTH_LONG).show();
     }
 
 }

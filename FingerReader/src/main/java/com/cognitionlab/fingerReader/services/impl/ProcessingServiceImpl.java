@@ -102,7 +102,7 @@ public class ProcessingServiceImpl implements ProcessingService {
     }
 
     @Override
-    public Camera selectCamera() throws Exception{
+    public Camera selectCamera() throws Exception {
         return cameraService.selectCamera();
     }
 
