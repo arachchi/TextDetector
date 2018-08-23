@@ -14,7 +14,7 @@ import java.util.Observer;
 
 public interface ProcessingService {
 
-    CameraPreview getCameraPreview(Context context);
+    CameraPreview getCameraPreview();
 
     Camera selectCamera() throws Exception;
 

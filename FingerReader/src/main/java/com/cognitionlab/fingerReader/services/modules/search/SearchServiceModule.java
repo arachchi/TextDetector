@@ -3,8 +3,6 @@ package com.cognitionlab.fingerReader.services.modules.search;
 import com.cognitionlab.fingerReader.services.SearchService;
 import com.cognitionlab.fingerReader.services.impl.SearchServiceImpl;
 
-import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 
@@ -12,8 +10,7 @@ import dagger.Provides;
 public class SearchServiceModule {
 
     @Provides
-    @Singleton
-    SearchService provideSearchService() {
+    SearchService searchService() {
         return new SearchServiceImpl();
     }
 }

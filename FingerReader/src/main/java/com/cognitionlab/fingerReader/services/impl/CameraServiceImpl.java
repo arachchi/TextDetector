@@ -34,8 +34,15 @@ public class CameraServiceImpl implements CameraService {
 
     private boolean cameraFront;
 
-    public CameraPreview getCameraPreview(Context context) {
-        return new CameraPreview(context, mCamera);
+    private CameraPreview cameraPreview;
+
+    public CameraServiceImpl(CameraPreview cameraPreview, Camera camera) {
+        this.cameraPreview = cameraPreview;
+        this.mCamera = camera;
+    }
+
+    public CameraPreview getCameraPreview() {
+        return this.cameraPreview;
     }
 
     public Camera getCamera() {

@@ -28,6 +28,4 @@ public class SearchDTO {
 
     private Map<String, List<Rect>> keywordsMap;
 
-    private Mat mIntermediateMat;
-
 }

@@ -8,7 +8,7 @@ import com.cognitionlab.fingerReader.CameraPreview;
 
 public interface CameraService {
 
-    CameraPreview getCameraPreview(Context context);
+    CameraPreview getCameraPreview();
 
     Camera selectCamera() throws Exception;
 

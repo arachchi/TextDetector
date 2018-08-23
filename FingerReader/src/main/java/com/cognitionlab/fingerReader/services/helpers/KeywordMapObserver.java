@@ -19,12 +19,6 @@ public class KeywordMapObserver implements Observer {
     @Getter(AccessLevel.PUBLIC)
     private Map<String, List<Rect>> keywordsMap;
 
-    private TessOCR mTessOCR;
-
-    public KeywordMapObserver(TessOCR mTessOCR) {
-        this.mTessOCR = mTessOCR;
-    }
-
     @Override
     public void update(Observable o, Object arg) {
         ContentNotifier contentNotifier = (ContentNotifier) o;

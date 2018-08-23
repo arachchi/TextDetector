@@ -14,8 +14,7 @@ import dagger.Provides;
 public class SpeechServiceModule {
 
     @Provides
-    @Singleton
-    SpeechService provideSpeechService() {
+    SpeechService speechService() {
         return new SpeechServiceImpl();
     }
 }

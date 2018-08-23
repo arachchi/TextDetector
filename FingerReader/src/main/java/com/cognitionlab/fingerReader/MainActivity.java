@@ -28,7 +28,9 @@ import android.widget.Toast;
 import com.cognitionlab.fingerReader.dtos.SearchDTO;
 import com.cognitionlab.fingerReader.services.ProcessingService;
 import com.cognitionlab.fingerReader.services.helpers.ContentObserver;
-import com.cognitionlab.fingerReader.services.modules.processing.DaggerProcessingServiceComponent;
+import com.cognitionlab.fingerReader.services.modules.ApplicationComponent;
+import com.cognitionlab.fingerReader.services.modules.ContextModule;
+import com.cognitionlab.fingerReader.services.modules.DaggerApplicationComponent;
 import com.example.detectText.R;
 
 import org.opencv.android.LoaderCallbackInterface;
@@ -88,13 +90,15 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         ButterKnife.setDebug(true);
-
-        processingService = DaggerProcessingServiceComponent.builder().build().provideProcessingService();
+        ApplicationComponent component = DaggerApplicationComponent.builder()
+                .contextModule(new ContextModule(this))
+                .build();
+        processingService = component.getProcessingService();
         this.requestPermissions();
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         myContext = this;
-        mPreview = processingService.getCameraPreview(myContext);
+        mPreview = processingService.getCameraPreview();
         cameraPreview.addView(mPreview);
 
         processingService.setTessOCR(MainActivity.this, getAssets());

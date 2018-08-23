@@ -5,49 +5,32 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import com.cognitionlab.fingerReader.CameraPreview;
-import com.cognitionlab.fingerReader.TessOCR;
 import com.cognitionlab.fingerReader.dtos.SearchDTO;
 import com.cognitionlab.fingerReader.services.CameraService;
-import com.cognitionlab.fingerReader.services.ExtractContentService;
 import com.cognitionlab.fingerReader.services.ProcessingService;
 import com.cognitionlab.fingerReader.services.SearchService;
 import com.cognitionlab.fingerReader.services.SpeechService;
 import com.cognitionlab.fingerReader.services.helpers.ContentNotifier;
 import com.cognitionlab.fingerReader.services.helpers.ImageProcessingTask;
 import com.cognitionlab.fingerReader.services.helpers.KeywordMapObserver;
-import com.cognitionlab.fingerReader.services.modules.camera.DaggerCameraServiceComponent;
-import com.cognitionlab.fingerReader.services.modules.extractContent.DaggerExtractContentServiceComponent;
-import com.cognitionlab.fingerReader.services.modules.search.DaggerSearchServiceComponent;
-import com.cognitionlab.fingerReader.services.modules.speech.DaggerSpeechServiceComponent;
+import com.cognitionlab.fingerReader.services.helpers.OpenCVLoaderCallback;
+import com.cognitionlab.fingerReader.services.helpers.ProcessingAdaptor;
 
 import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.core.Mat;
 
 import java.util.Observer;
 
-import javax.inject.Inject;
-
 public class ProcessingServiceImpl implements ProcessingService {
 
-    @Inject
-    CameraService cameraService;
+    private CameraService cameraService;
 
-    @Inject
-    ExtractContentService extractContentService;
+    private SearchService searchService;
 
-    @Inject
-    SearchService searchService;
+    private SpeechService speechService;
 
-    @Inject
-    SpeechService speechService;
-
-    private Mat mIntermediateMat;
-
-    private TessOCR mTessOCR;
+    private ProcessingAdaptor processingAdaptor;
 
     private BaseLoaderCallback mLoaderCallback;
 
@@ -55,40 +38,27 @@ public class ProcessingServiceImpl implements ProcessingService {
 
     private KeywordMapObserver keywordMapObserver;
 
-    public ProcessingServiceImpl() {
-        cameraService = DaggerCameraServiceComponent.builder().build().provideCameraServiceModule();
-        extractContentService = DaggerExtractContentServiceComponent.builder().build().provideExtractContentService();
-        searchService = DaggerSearchServiceComponent.builder().build().provideSearchService();
-        speechService = DaggerSpeechServiceComponent.builder().build().provideSpeechService();
+    public ProcessingServiceImpl(ContentNotifier contentNotifier,
+                                 ProcessingAdaptor processingAdaptor,
+                                 OpenCVLoaderCallback openCVLoaderCallback,
+                                 KeywordMapObserver keywordMapObserver,
+                                 CameraService cameraService,
+                                 SearchService searchService,
+                                 SpeechService speechService) {
 
-        contentNotifier = new ContentNotifier();
+        this.cameraService = cameraService;
+        this.searchService = searchService;
+        this.speechService = speechService;
+        this.contentNotifier = contentNotifier;
+        this.processingAdaptor = processingAdaptor;
+        this.mLoaderCallback = openCVLoaderCallback;
+        this.keywordMapObserver = keywordMapObserver;
+
+        this.addProcessingContentObserver(this.keywordMapObserver);
     }
 
     public void setTessOCR(Context context, AssetManager assetManager) {
-        mTessOCR = new TessOCR(context, assetManager);
-        mLoaderCallback = new BaseLoaderCallback(context) {
-            @Override
-            public void onManagerConnected(int status) {
-                switch (status) {
-                    case LoaderCallbackInterface.SUCCESS: {
-                        Log.i("OpenCV", "OpenCV loaded successfully");
 
-                        mIntermediateMat = new Mat();
-                        cameraService.initiateMatrices();
-                    }
-                    break;
-                    default: {
-                        super.onManagerConnected(status);
-                    }
-                    break;
-                }
-            }
-        };
-
-        if (keywordMapObserver == null) {
-            keywordMapObserver = new KeywordMapObserver(this.mTessOCR);
-            this.addProcessingContentObserver(keywordMapObserver);
-        }
     }
 
     @Override
@@ -97,8 +67,8 @@ public class ProcessingServiceImpl implements ProcessingService {
     }
 
     @Override
-    public CameraPreview getCameraPreview(Context context) {
-        return cameraService.getCameraPreview(context);
+    public CameraPreview getCameraPreview() {
+        return cameraService.getCameraPreview();
     }
 
     @Override
@@ -123,7 +93,7 @@ public class ProcessingServiceImpl implements ProcessingService {
 
     @Override
     public void fullTextRecognition(Bitmap bitmap) {
-        ImageProcessingTask t = new ImageProcessingTask(mTessOCR, contentNotifier);
+        ImageProcessingTask t = new ImageProcessingTask(processingAdaptor, contentNotifier);
         t.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, bitmap);
     }
 
@@ -134,7 +104,6 @@ public class ProcessingServiceImpl implements ProcessingService {
 
     @Override
     public Bitmap searchText(SearchDTO searchDTO) {
-        searchDTO.setMIntermediateMat(this.mIntermediateMat);
         searchDTO.setKeywordsMap(this.keywordMapObserver.getKeywordsMap());
         return searchService.searchText(searchDTO);
     }

@@ -18,8 +18,8 @@ public class ImageProcessingTask extends AsyncTask<Bitmap, String, String> {
 
     private ContentNotifier contentNotifier;
 
-    public ImageProcessingTask(TessOCR mTessOCR, ContentNotifier contentNotifier) {
-        this.mTessOCR = mTessOCR;
+    public ImageProcessingTask(ProcessingAdaptor processingAdaptor, ContentNotifier contentNotifier) {
+        this.mTessOCR = processingAdaptor.getTessaract();
         this.contentNotifier = contentNotifier;
     }
 

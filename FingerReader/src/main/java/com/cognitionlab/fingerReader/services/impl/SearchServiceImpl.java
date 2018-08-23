@@ -7,6 +7,7 @@ import com.cognitionlab.fingerReader.dtos.SearchDTO;
 import com.cognitionlab.fingerReader.services.SearchService;
 
 import org.opencv.android.Utils;
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
@@ -48,18 +49,19 @@ public class SearchServiceImpl implements SearchService {
     }
 
     private Bitmap localizeSearchResult(SearchDTO searchDTO, List<android.graphics.Rect> resultList) {
+        Mat matrix = new Mat();
         Bitmap bitmap = searchDTO.getBitmap();
-        Utils.bitmapToMat(bitmap, searchDTO.getMIntermediateMat());
+        Utils.bitmapToMat(bitmap, matrix);
         final int lineThickness = 10;
         Scalar CONTOUR_COLOR_HIGHLIGHT = new Scalar(255, 0, 0, 255);
 
         for (android.graphics.Rect sample : resultList) {
             Point pointA = new Point(sample.left, sample.top), pointB = new Point(sample.right, sample.bottom);
-            Imgproc.rectangle(searchDTO.getMIntermediateMat(), pointA, pointB, CONTOUR_COLOR_HIGHLIGHT, lineThickness);
+            Imgproc.rectangle(matrix, pointA, pointB, CONTOUR_COLOR_HIGHLIGHT, lineThickness);
         }
 
         Bitmap processedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
-        Utils.matToBitmap(searchDTO.getMIntermediateMat(), processedBitmap);
+        Utils.matToBitmap(matrix, processedBitmap);
 
         return processedBitmap;
     }
