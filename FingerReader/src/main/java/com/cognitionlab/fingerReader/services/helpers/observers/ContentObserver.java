@@ -1,4 +1,4 @@
-package com.cognitionlab.fingerReader.services.helpers;
+package com.cognitionlab.fingerReader.services.helpers.observers;
 
 import android.graphics.Bitmap;
 import android.os.Handler;

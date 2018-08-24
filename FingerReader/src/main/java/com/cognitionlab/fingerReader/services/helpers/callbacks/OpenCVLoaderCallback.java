@@ -1,4 +1,4 @@
-package com.cognitionlab.fingerReader.services.helpers;
+package com.cognitionlab.fingerReader.services.helpers.callbacks;
 
 import android.content.Context;
 import android.util.Log;

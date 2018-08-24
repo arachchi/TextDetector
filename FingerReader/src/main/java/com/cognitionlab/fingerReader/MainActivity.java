@@ -27,7 +27,7 @@ import android.widget.Toast;
 
 import com.cognitionlab.fingerReader.dtos.SearchDTO;
 import com.cognitionlab.fingerReader.services.ProcessingService;
-import com.cognitionlab.fingerReader.services.helpers.ContentObserver;
+import com.cognitionlab.fingerReader.services.helpers.observers.ContentObserver;
 import com.cognitionlab.fingerReader.services.modules.ApplicationComponent;
 import com.cognitionlab.fingerReader.services.modules.ContextModule;
 import com.cognitionlab.fingerReader.services.modules.DaggerApplicationComponent;
@@ -50,8 +50,6 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class MainActivity extends Activity {
-
-    private int SELECT_FILE = 1;
 
     @BindView(R.id.ivImage)
     ImageView ivImage;

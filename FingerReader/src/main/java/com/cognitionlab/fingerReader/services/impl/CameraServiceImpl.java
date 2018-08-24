@@ -1,6 +1,5 @@
 package com.cognitionlab.fingerReader.services.impl;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -10,7 +9,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.hardware.Camera;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.cognitionlab.fingerReader.CameraPreview;
 import com.cognitionlab.fingerReader.services.CameraService;
@@ -18,13 +16,6 @@ import com.cognitionlab.fingerReader.services.CameraService;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class CameraServiceImpl implements CameraService {
 

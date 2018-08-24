@@ -1,9 +1,9 @@
-package com.cognitionlab.fingerReader.services.helpers;
+package com.cognitionlab.fingerReader.services.helpers.observers;
 
 import android.graphics.Rect;
 import android.util.Log;
 
-import com.cognitionlab.fingerReader.TessOCR;
+import com.cognitionlab.fingerReader.services.helpers.observers.ContentNotifier;
 
 import java.util.Date;
 import java.util.List;

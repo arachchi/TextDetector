@@ -12,11 +12,11 @@ import com.cognitionlab.fingerReader.services.CameraService;
 import com.cognitionlab.fingerReader.services.ProcessingService;
 import com.cognitionlab.fingerReader.services.SearchService;
 import com.cognitionlab.fingerReader.services.SpeechService;
-import com.cognitionlab.fingerReader.services.helpers.ContentNotifier;
+import com.cognitionlab.fingerReader.services.helpers.observers.ContentNotifier;
 import com.cognitionlab.fingerReader.services.helpers.ImageProcessingTask;
-import com.cognitionlab.fingerReader.services.helpers.KeywordMapObserver;
-import com.cognitionlab.fingerReader.services.helpers.OpenCVLoaderCallback;
-import com.cognitionlab.fingerReader.services.helpers.ProcessingAdaptor;
+import com.cognitionlab.fingerReader.services.helpers.observers.KeywordMapObserver;
+import com.cognitionlab.fingerReader.services.helpers.callbacks.OpenCVLoaderCallback;
+import com.cognitionlab.fingerReader.services.helpers.adaptors.ProcessingAdaptor;
 
 import org.opencv.android.BaseLoaderCallback;
 
@@ -25,17 +25,11 @@ import java.util.Observer;
 public class ProcessingServiceImpl implements ProcessingService {
 
     private CameraService cameraService;
-
     private SearchService searchService;
-
     private SpeechService speechService;
-
     private ProcessingAdaptor processingAdaptor;
-
     private BaseLoaderCallback mLoaderCallback;
-
     private ContentNotifier contentNotifier;
-
     private KeywordMapObserver keywordMapObserver;
 
     public ProcessingServiceImpl(ContentNotifier contentNotifier,
