@@ -26,29 +26,12 @@ public class ImageProcessingTask extends AsyncTask<Bitmap, String, String> {
 
     @Override
     protected String doInBackground(final Bitmap... bitmap) {
-        DataExtractionDTO dataExtractionDTO = new DataExtractionDTO();
+
         Bitmap processingBitmap = bitmap[0];
-        Log.i("TIME", "Text Extraction Started Time +" + new Date());
-        final String srcText = processingAdaptor.getRecognizedText(processingBitmap);
-        Log.i("TIME", "Text Extraction End Time +" + new Date());
-
-        Log.i("TIME", "Keyword Map Creation Started Time +" + new Date());
-        Map<String, List<Rect>> keywordsMap = processingAdaptor.getRecognizeTextLocationsMap(srcText);
-        Log.i("TIME", "Keyword Map Creation End Time +" + new Date());
-
-        Log.i("TIME", "Text Setting Started Time +" + new Date());
-        if (srcText.isEmpty()) {
-            dataExtractionDTO.setContent("No Text Found");
-        } else {
-            dataExtractionDTO.setContent(srcText);
-        }
-
-        dataExtractionDTO.setImage(processingBitmap);
-        dataExtractionDTO.setKeywordsMap(keywordsMap);
-        contentNotifier.setDataExtractionDTO(dataExtractionDTO);
+        this.processingAdaptor.getExtractedData(processingBitmap);
         Log.i("TIME", "Text Setting End Time +" + new Date());
 
-        return srcText;
+        return "Processing";
     }
 
 

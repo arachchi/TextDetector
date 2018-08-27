@@ -1,4 +1,4 @@
-package com.cognitionlab.fingerReader.services.helpers.adaptors;
+package com.cognitionlab.fingerReader.imageProcessors;
 
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -8,11 +8,11 @@ import com.cognitionlab.fingerReader.dtos.DataExtractionDTO;
 import java.util.List;
 import java.util.Map;
 
-public interface ProcessingAdaptor {
+public interface ImageProcessor {
 
-    String getRecognizedText(Bitmap bitmap);
+    String getResults(Bitmap bitmap);
 
-    Map<String, List<Rect>> getRecognizeTextLocationsMap(String recognizedText);
+    Map<String, List<Rect>> getKeywordMap(String result);
 
     default void getExtractedData(Bitmap bitmap) {
         System.out.println("Not Available");

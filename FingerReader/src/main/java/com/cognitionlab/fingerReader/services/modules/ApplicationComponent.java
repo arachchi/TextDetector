@@ -6,6 +6,7 @@ import com.cognitionlab.fingerReader.services.modules.processing.ProcessingServi
 import dagger.Component;
 
 @Component(modules = {ProcessingServiceModule.class})
+@ApplicationScope
 public interface ApplicationComponent {
 
     ProcessingService getProcessingService();

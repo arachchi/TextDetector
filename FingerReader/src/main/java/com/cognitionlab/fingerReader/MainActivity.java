@@ -31,7 +31,6 @@ import com.cognitionlab.fingerReader.services.helpers.observers.ContentObserver;
 import com.cognitionlab.fingerReader.services.modules.ApplicationComponent;
 import com.cognitionlab.fingerReader.services.modules.ContextModule;
 import com.cognitionlab.fingerReader.services.modules.DaggerApplicationComponent;
-import com.example.detectText.R;
 
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -85,14 +84,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.requestPermissions();
         setContentView(R.layout.activity_main);
+
         ButterKnife.bind(this);
         ButterKnife.setDebug(true);
         ApplicationComponent component = DaggerApplicationComponent.builder()
                 .contextModule(new ContextModule(this))
                 .build();
         processingService = component.getProcessingService();
-        this.requestPermissions();
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         myContext = this;
@@ -248,6 +248,13 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         //when on Pause, release camera in order to be used from other applications
+        processingService.releaseCamera();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
         processingService.releaseCamera();
     }
 

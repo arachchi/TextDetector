@@ -1,11 +1,10 @@
 package com.cognitionlab.fingerReader.services.helpers.adaptors;
 
 import android.content.Context;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 
-import com.cognitionlab.fingerReader.TessOCR;
+import com.cognitionlab.fingerReader.imageProcessors.TessOCR;
 
 import java.util.List;
 import java.util.Map;

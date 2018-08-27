@@ -1,4 +1,4 @@
-package com.cognitionlab.fingerReader;
+package com.cognitionlab.fingerReader.imageProcessors;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TessOCR {
+public class TessOCR implements ImageProcessor {
     private static final String lang = "eng";
     private static final String TAG = "TESSERACT";
 

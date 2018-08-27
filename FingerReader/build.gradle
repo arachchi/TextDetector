@@ -5,7 +5,7 @@ android {
     buildToolsVersion '27.0.3'
 
     defaultConfig {
-        applicationId "com.example.detectText"
+        applicationId "com.cognitionlab.fingerReader"
         minSdkVersion 14
         targetSdkVersion 27
         setProperty("archivesBaseName", "DetectText")
@@ -32,6 +32,7 @@ android {
 def AAVersion = '4.4.0'
 
 dependencies {
+    //noinspection GradleCompatible
     implementation 'com.android.support:appcompat-v7:27.0.1'
     implementation 'com.rmtheis:tess-two:6.0.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -46,4 +47,9 @@ dependencies {
     implementation "org.androidannotations:androidannotations-api:$AAVersion"
     compileOnly 'org.projectlombok:lombok:1.18.2'
     annotationProcessor 'org.projectlombok:lombok:1.18.2'
+
+    implementation 'com.google.firebase:firebase-ml-vision:17.0.0'
+    implementation 'com.google.firebase:firebase-core:16.0.0'
 }
+
+apply plugin: 'com.google.gms.google-services'
