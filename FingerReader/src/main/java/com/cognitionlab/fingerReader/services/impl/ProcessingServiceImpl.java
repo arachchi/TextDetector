@@ -17,6 +17,7 @@ import com.cognitionlab.fingerReader.services.helpers.ImageProcessingTask;
 import com.cognitionlab.fingerReader.services.helpers.observers.KeywordMapObserver;
 import com.cognitionlab.fingerReader.services.helpers.callbacks.OpenCVLoaderCallback;
 import com.cognitionlab.fingerReader.services.helpers.adaptors.ProcessingAdaptor;
+import com.cognitionlab.fingerReader.services.helpers.observers.SpeechObserver;
 
 import org.opencv.android.BaseLoaderCallback;
 
@@ -26,11 +27,11 @@ public class ProcessingServiceImpl implements ProcessingService {
 
     private CameraService cameraService;
     private SearchService searchService;
-    private SpeechService speechService;
     private ProcessingAdaptor processingAdaptor;
     private BaseLoaderCallback mLoaderCallback;
     private ContentNotifier contentNotifier;
     private KeywordMapObserver keywordMapObserver;
+    private SpeechObserver speechObserver;
 
     public ProcessingServiceImpl(ContentNotifier contentNotifier,
                                  ProcessingAdaptor processingAdaptor,
@@ -38,17 +39,18 @@ public class ProcessingServiceImpl implements ProcessingService {
                                  KeywordMapObserver keywordMapObserver,
                                  CameraService cameraService,
                                  SearchService searchService,
-                                 SpeechService speechService) {
+                                 SpeechObserver speechObserver) {
 
         this.cameraService = cameraService;
         this.searchService = searchService;
-        this.speechService = speechService;
         this.contentNotifier = contentNotifier;
         this.processingAdaptor = processingAdaptor;
         this.mLoaderCallback = openCVLoaderCallback;
         this.keywordMapObserver = keywordMapObserver;
+        this.speechObserver = speechObserver;
 
         this.addProcessingContentObserver(this.keywordMapObserver);
+        this.addProcessingContentObserver(this.speechObserver);
     }
 
     public void setTessOCR(Context context, AssetManager assetManager) {

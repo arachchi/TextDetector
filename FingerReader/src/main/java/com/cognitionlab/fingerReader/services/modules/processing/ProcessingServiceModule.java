@@ -1,6 +1,8 @@
 package com.cognitionlab.fingerReader.services.modules.processing;
 
 import android.content.Context;
+import android.speech.tts.TextToSpeech;
+import android.util.Log;
 
 import com.cognitionlab.fingerReader.services.CameraService;
 import com.cognitionlab.fingerReader.services.ProcessingService;
@@ -12,6 +14,7 @@ import com.cognitionlab.fingerReader.services.helpers.observers.KeywordMapObserv
 import com.cognitionlab.fingerReader.services.helpers.callbacks.OpenCVLoaderCallback;
 import com.cognitionlab.fingerReader.services.helpers.adaptors.ProcessingAdaptor;
 import com.cognitionlab.fingerReader.services.helpers.adaptors.TessaractAdaptor;
+import com.cognitionlab.fingerReader.services.helpers.observers.SpeechObserver;
 import com.cognitionlab.fingerReader.services.impl.ProcessingServiceImpl;
 import com.cognitionlab.fingerReader.services.modules.ApplicationContext;
 import com.cognitionlab.fingerReader.services.modules.ApplicationScope;
@@ -19,10 +22,23 @@ import com.cognitionlab.fingerReader.services.modules.camera.CameraServiceModule
 import com.cognitionlab.fingerReader.services.modules.search.SearchServiceModule;
 import com.cognitionlab.fingerReader.services.modules.speech.SpeechServiceModule;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+
 import dagger.Module;
 import dagger.Provides;
 
-@Module(includes = {CameraServiceModule.class, SpeechServiceModule.class, SearchServiceModule.class})
+@Module(includes = {CameraServiceModule.class, SearchServiceModule.class})
 public class ProcessingServiceModule {
 
     @Provides
@@ -32,7 +48,7 @@ public class ProcessingServiceModule {
                                         KeywordMapObserver keywordMapObserver,
                                         CameraService cameraService,
                                         SearchService searchService,
-                                        SpeechService speechService) {
+                                        SpeechObserver speechObserver) {
 
         return new ProcessingServiceImpl(contentNotifier,
                 processingAdaptor,
@@ -40,7 +56,7 @@ public class ProcessingServiceModule {
                 keywordMapObserver,
                 cameraService,
                 searchService,
-                speechService);
+                speechObserver);
     }
 
     @Provides
@@ -62,5 +78,85 @@ public class ProcessingServiceModule {
     @Provides
     public KeywordMapObserver keywordMapObserver() {
         return new KeywordMapObserver();
+    }
+
+    @Provides
+    public SpeechObserver speechObserver(TextToSpeech textToSpeech, @ApplicationContext Context context, Set<String> dictionaryWords) {
+        return new SpeechObserver(textToSpeech, context, dictionaryWords);
+    }
+
+    @Provides
+    public TextToSpeech textToSpeech(@ApplicationContext Context context) {
+        TextToSpeech tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
+
+            @Override
+            public void onInit(int status) {
+                if (status == TextToSpeech.SUCCESS) {
+                } else {
+                    Log.e("error", "Initilization Failed!");
+                }
+            }
+        });
+
+        tts.setLanguage(Locale.US);
+
+        return tts;
+    }
+
+    @Provides
+    public Set<String> dictionaryWords(@ApplicationContext Context context) {
+        Set<String> wordsSet = new HashSet<>();
+
+        final String DATA_PATH = context.getFilesDir() + File.separator + "FingerReader" + File.separator;
+        final String FOLDER = "dictionary";
+        final String FILE_PATH = FOLDER + File.separator + "dictionary.txt";
+        final String FULL_PATH = DATA_PATH + FILE_PATH;
+        String TAG = "Dictionary";
+
+        String[] paths = new String[]{DATA_PATH, DATA_PATH + FOLDER + File.separator};
+
+        for (String path : paths) {
+            File dir = new File(path);
+            if (!dir.exists()) {
+                if (!dir.mkdirs()) {
+                    Log.v(TAG, "ERROR: Creation of directory " + path + " on sdcard failed");
+                } else {
+                    Log.v(TAG, "Created directory " + path + " on sdcard");
+                }
+            }
+        }
+        File file = new File(FULL_PATH);
+        if (!(file).exists()) {
+            try {
+                InputStream in = context.getAssets().open(FILE_PATH);
+                OutputStream out = new FileOutputStream(new File(FULL_PATH));
+
+                byte[] buf = new byte[1024];
+                int len;
+                while ((len = in.read(buf)) != -1) {
+                    out.write(buf, 0, len);
+                }
+                in.close();
+                out.close();
+
+                file = new File(FULL_PATH);
+
+                Log.v(TAG, "Copied " + " traineddata");
+            } catch (IOException e) {
+                Log.e(TAG, "Was unable to copy " + " traineddata " + e.toString());
+            }
+        }
+        try {
+            Path path = Paths.get(file.toURI());
+            byte[] readBytes = Files.readAllBytes(path);
+            String wordListContents = new String(readBytes, "UTF-8");
+            String[] words = wordListContents.split("\n"); //the text file should contain one word in one line
+
+            Collections.addAll(wordsSet, words);
+        } catch (Exception e) {
+
+        }
+
+        return wordsSet;
     }
 }
