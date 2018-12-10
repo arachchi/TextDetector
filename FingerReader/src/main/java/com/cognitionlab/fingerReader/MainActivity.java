@@ -7,18 +7,16 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
+import android.hardware.usb.UsbDevice;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
-import android.view.textservice.SentenceSuggestionsInfo;
-import android.view.textservice.SpellCheckerSession;
-import android.view.textservice.SuggestionsInfo;
-import android.view.textservice.TextInfo;
-import android.view.textservice.TextServicesManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -36,6 +34,11 @@ import com.cognitionlab.fingerReader.services.helpers.observers.ContentObserver;
 import com.cognitionlab.fingerReader.services.modules.ApplicationComponent;
 import com.cognitionlab.fingerReader.services.modules.ContextModule;
 import com.cognitionlab.fingerReader.services.modules.DaggerApplicationComponent;
+import com.jiangdg.usbcamera.UVCCameraHelper;
+import com.serenegiant.usb.CameraDialog;
+import com.serenegiant.usb.USBMonitor;
+import com.serenegiant.usb.common.AbstractUVCCameraHandler;
+import com.serenegiant.usb.widget.CameraViewInterface;
 
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -53,7 +56,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements CameraDialog.CameraDialogParent, CameraViewInterface.Callback {
 
     @BindView(R.id.ivImage)
     ImageView ivImage;
@@ -74,7 +77,77 @@ public class MainActivity extends Activity {
     @BindView(R.id.searchText)
     EditText editText;
 
+    @BindView(R.id.usbCameraPreview)
+    public View mTextureView;
+    private UVCCameraHelper mCameraHelper;
+    public CameraViewInterface mUVCCameraView;
+    private boolean isRequest;
+    private boolean isPreview;
+
+    private void showShortMsg(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
     private PopupWindow mPopupWindow;
+    private UVCCameraHelper.OnMyDevConnectListener listener = new UVCCameraHelper.OnMyDevConnectListener() {
+
+        @Override
+        public void onAttachDev(UsbDevice device) {
+            if (mCameraHelper == null || mCameraHelper.getUsbDeviceCount() == 0) {
+                showShortMsg("check no usb camera");
+                return;
+            }
+            // request open permission
+            if (!isRequest) {
+                isRequest = true;
+                if (mCameraHelper != null) {
+                    mCameraHelper.requestPermission(0);
+                }
+            }
+        }
+
+        @Override
+        public void onDettachDev(UsbDevice device) {
+            // close camera
+            if (isRequest) {
+                isRequest = false;
+                mCameraHelper.closeCamera();
+                showShortMsg(device.getDeviceName() + " is out");
+            }
+        }
+
+        @Override
+        public void onConnectDev(UsbDevice device, boolean isConnected) {
+            if (!isConnected) {
+                showShortMsg("fail to connect,please check resolution params");
+                isPreview = false;
+            } else {
+                isPreview = true;
+                showShortMsg("connecting");
+                // initialize seekbar
+                // need to wait UVCCamera initialize over
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        Looper.prepare();
+                        if (mCameraHelper != null && mCameraHelper.isCameraOpened()) {
+                        }
+                        Looper.loop();
+                    }
+                }).start();
+            }
+        }
+
+        @Override
+        public void onDisConnectDev(UsbDevice device) {
+            showShortMsg("disconnecting");
+        }
+    };
 
     private String userChoosenTask;
     private Bitmap bitmap;
@@ -101,8 +174,28 @@ public class MainActivity extends Activity {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         myContext = this;
+
         mPreview = processingService.getCameraPreview();
         cameraPreview.addView(mPreview);
+
+
+        //USB Camera View Setup
+        mUVCCameraView = (CameraViewInterface) mTextureView;
+        mUVCCameraView.setCallback(this);
+        mCameraHelper = UVCCameraHelper.getInstance();
+        mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);
+        mCameraHelper.initUSBMonitor(this, mUVCCameraView, listener);
+
+
+        mCameraHelper.setOnPreviewFrameListener(new AbstractUVCCameraHandler.OnPreViewResultListener() {
+            @Override
+            public void onPreviewResult(byte[] nv21Yuv) {
+
+            }
+        });
+
+
+        //Complete
 
         processingService.setTessOCR(MainActivity.this, getAssets());
         this.contentObserver = new ContentObserver(bitmap, textView);
@@ -137,6 +230,24 @@ public class MainActivity extends Activity {
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.CAMERA}, 1);
             }
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // step.2 register USB event broadcast
+        if (mCameraHelper != null) {
+            mCameraHelper.registerUSB();
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // step.3 unregister USB event broadcast
+        if (mCameraHelper != null) {
+            mCameraHelper.unregisterUSB();
         }
     }
 
@@ -235,7 +346,6 @@ public class MainActivity extends Activity {
     @Override
     public void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
     }
 
     @Override
@@ -315,5 +425,41 @@ public class MainActivity extends Activity {
         Toast.makeText(myContext, text, Toast.LENGTH_LONG).show();
     }
 
+    @Override
+    public USBMonitor getUSBMonitor() {
+        return mCameraHelper.getUSBMonitor();
+    }
+
+    @Override
+    public void onDialogResult(boolean canceled) {
+        if (canceled) {
+            showShortMsg("取消操作");
+        }
+    }
+
+    public boolean isCameraOpened() {
+        return mCameraHelper.isCameraOpened();
+    }
+
+    @Override
+    public void onSurfaceCreated(CameraViewInterface view, Surface surface) {
+        if (!isPreview && mCameraHelper.isCameraOpened()) {
+            mCameraHelper.startPreview(mUVCCameraView);
+            isPreview = true;
+        }
+    }
+
+    @Override
+    public void onSurfaceChanged(CameraViewInterface view, Surface surface, int width, int height) {
+
+    }
+
+    @Override
+    public void onSurfaceDestroy(CameraViewInterface view, Surface surface) {
+        if (isPreview && mCameraHelper.isCameraOpened()) {
+            mCameraHelper.stopPreview();
+            isPreview = false;
+        }
+    }
 }
 

@@ -3,19 +3,9 @@ package com.cognitionlab.fingerReader.dtos;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 
-import org.opencv.core.Mat;
-
 import java.util.List;
 import java.util.Map;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-
-@ToString
-@Getter(AccessLevel.PUBLIC)
-@Setter(AccessLevel.PUBLIC)
 public class SearchDTO {
 
     private Bitmap bitmap;
@@ -28,4 +18,54 @@ public class SearchDTO {
 
     private Map<String, List<Rect>> keywordsMap;
 
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.bitmap = bitmap;
+    }
+
+    public String getInput() {
+        return input;
+    }
+
+    public void setInput(String input) {
+        this.input = input;
+    }
+
+    public boolean isCaseSensitive() {
+        return caseSensitive;
+    }
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
+    }
+
+    public boolean isOnlyAlphaNumeric() {
+        return onlyAlphaNumeric;
+    }
+
+    public void setOnlyAlphaNumeric(boolean onlyAlphaNumeric) {
+        this.onlyAlphaNumeric = onlyAlphaNumeric;
+    }
+
+    public Map<String, List<Rect>> getKeywordsMap() {
+        return keywordsMap;
+    }
+
+    public void setKeywordsMap(Map<String, List<Rect>> keywordsMap) {
+        this.keywordsMap = keywordsMap;
+    }
+
+    @Override
+    public String toString() {
+        return "SearchDTO{" +
+                "bitmap=" + bitmap +
+                ", input='" + input + '\'' +
+                ", caseSensitive=" + caseSensitive +
+                ", onlyAlphaNumeric=" + onlyAlphaNumeric +
+                ", keywordsMap=" + keywordsMap +
+                '}';
+    }
 }

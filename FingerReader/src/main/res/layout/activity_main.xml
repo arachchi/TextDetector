@@ -22,6 +22,12 @@
                 android:layout_weight="1"
                 android:orientation="vertical" />
 
+            <com.serenegiant.usb.widget.UVCCameraTextureView
+                android:id="@+id/usbCameraPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"/>
+
         </LinearLayout>
 
         <LinearLayout

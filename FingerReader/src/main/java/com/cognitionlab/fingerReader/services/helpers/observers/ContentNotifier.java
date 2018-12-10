@@ -4,15 +4,13 @@ import com.cognitionlab.fingerReader.dtos.DataExtractionDTO;
 
 import java.util.Observable;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.ToString;
-
-@ToString
-@Getter(AccessLevel.PUBLIC)
 public class ContentNotifier extends Observable {
 
     private DataExtractionDTO dataExtractionDTO;
+
+    public DataExtractionDTO getDataExtractionDTO() {
+        return dataExtractionDTO;
+    }
 
     public ContentNotifier() {
 
@@ -22,5 +20,12 @@ public class ContentNotifier extends Observable {
         this.dataExtractionDTO = dataExtractionDTO;
         setChanged();
         notifyObservers();
+    }
+
+    @Override
+    public String toString() {
+        return "ContentNotifier{" +
+                "dataExtractionDTO=" + dataExtractionDTO +
+                '}';
     }
 }

@@ -1,2 +1,3 @@
 include ':FingerReader'
 include ':openCVLibrary340'
+include ':libusbcamera'

@@ -20,11 +20,6 @@ import com.google.firebase.ml.vision.text.RecognizedLanguage;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import lombok.NonNull;
 
 public class FirebaseProcessor implements ImageProcessor {
 
@@ -75,7 +70,7 @@ public class FirebaseProcessor implements ImageProcessor {
                 .addOnFailureListener(
                         new OnFailureListener() {
                             @Override
-                            public void onFailure(@NonNull Exception e) {
+                            public void onFailure(Exception e) {
                                 // Task failed with an exception
                                 // ...
                             }
@@ -135,7 +130,7 @@ public class FirebaseProcessor implements ImageProcessor {
                 .addOnFailureListener(
                         new OnFailureListener() {
                             @Override
-                            public void onFailure(@NonNull Exception e) {
+                            public void onFailure(Exception e) {
                                 // Task failed with an exception
                                 // ...
 

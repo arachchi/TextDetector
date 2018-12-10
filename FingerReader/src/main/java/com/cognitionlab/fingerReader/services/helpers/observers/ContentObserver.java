@@ -8,12 +8,6 @@ import android.widget.TextView;
 import java.util.Observable;
 import java.util.Observer;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.ToString;
-
-@ToString
-@Getter(AccessLevel.PUBLIC)
 public class ContentObserver implements Observer {
 
     private TextView displayView;
@@ -35,5 +29,26 @@ public class ContentObserver implements Observer {
             this.displayView.setText(contentNotifier.getDataExtractionDTO().getContent());
             this.bitmap = contentNotifier.getDataExtractionDTO().getImage();
         });
+    }
+
+    public TextView getDisplayView() {
+        return displayView;
+    }
+
+    public Bitmap getBitmap() {
+        return bitmap;
+    }
+
+    public Handler getHandler() {
+        return handler;
+    }
+
+    @Override
+    public String toString() {
+        return "ContentObserver{" +
+                "displayView=" + displayView +
+                ", bitmap=" + bitmap +
+                ", handler=" + handler +
+                '}';
     }
 }

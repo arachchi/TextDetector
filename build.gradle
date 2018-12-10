@@ -9,9 +9,10 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.1.4'
+        classpath 'com.android.tools.build:gradle:3.2.1'
         classpath 'com.google.gms:google-services:4.1.0'
         classpath 'com.jakewharton:butterknife-gradle-plugin:9.0.0-rc1'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
     }
 }
 
@@ -21,6 +22,11 @@ allprojects {
             url 'https://maven.google.com/'
             name 'Google'
         }
+        maven { url 'http://raw.github.com/saki4510t/libcommon/master/repository/' }
         jcenter()
     }
+}
+
+ext {
+    commonLibVersion = '1.5.20'
 }

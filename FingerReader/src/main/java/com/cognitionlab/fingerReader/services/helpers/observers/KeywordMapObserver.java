@@ -11,12 +11,8 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-
 public class KeywordMapObserver implements Observer {
 
-    @Getter(AccessLevel.PUBLIC)
     private Map<String, List<Rect>> keywordsMap;
 
     @Override
@@ -26,5 +22,16 @@ public class KeywordMapObserver implements Observer {
         Log.i("TIME", "Keyword Map Creation Started Time +" + new Date());
         this.keywordsMap = contentNotifier.getDataExtractionDTO().getKeywordsMap();
         Log.i("TIME", "Keyword Map Creation End Time +" + new Date());
+    }
+
+    public Map<String, List<Rect>> getKeywordsMap() {
+        return keywordsMap;
+    }
+
+    @Override
+    public String toString() {
+        return "KeywordMapObserver{" +
+                "keywordsMap=" + keywordsMap +
+                '}';
     }
 }
