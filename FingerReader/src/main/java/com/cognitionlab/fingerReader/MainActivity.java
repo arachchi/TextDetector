@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.View;
@@ -183,7 +184,10 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
         mUVCCameraView = (CameraViewInterface) mTextureView;
         mUVCCameraView.setCallback(this);
         mCameraHelper = UVCCameraHelper.getInstance();
-        mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);
+
+        if (mCameraHelper.getUSBMonitor() == null) {
+            mCameraHelper.setDefaultFrameFormat(UVCCameraHelper.FRAME_FORMAT_YUYV);
+        }
         mCameraHelper.initUSBMonitor(this, mUVCCameraView, listener);
 
 
@@ -201,6 +205,30 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
         this.contentObserver = new ContentObserver(bitmap, textView);
         processingService.addProcessingContentObserver(this.contentObserver);
 
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int action = event.getAction();
+        int keyCode = event.getKeyCode();
+        switch (keyCode) {
+
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                if (action == KeyEvent.ACTION_DOWN) {
+                    Log.i("VOL_UP_pressed", String.valueOf(event.getKeyCode()));
+                    Toast.makeText(getApplication(), "Image Capture clicked", Toast.LENGTH_SHORT).show();
+                    processingService.getCamera().takePicture(null, null, mPicture);
+                }
+                return true;
+
+            case KeyEvent.KEYCODE_ENTER:
+                if (action == KeyEvent.ACTION_DOWN) {
+                    Log.i("ENTER_pressed", String.valueOf(event.getKeyCode()));
+                    Toast.makeText(getApplication(), "ANDROID button clicked", Toast.LENGTH_SHORT).show();
+                }
+            default:
+                return super.dispatchKeyEvent(event);
+        }
     }
 
     @OnClick(R.id.btnSeachText)
@@ -264,6 +292,7 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
         this.showToast(message);
     }
 
+    //This is for the in-built Camera
     private Camera.PictureCallback getPictureCallback() {
         Camera.PictureCallback picture = new Camera.PictureCallback() {
 
@@ -433,7 +462,7 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
     @Override
     public void onDialogResult(boolean canceled) {
         if (canceled) {
-            showShortMsg("取消操作");
+            showShortMsg("Mini Dialog");
         }
     }
 

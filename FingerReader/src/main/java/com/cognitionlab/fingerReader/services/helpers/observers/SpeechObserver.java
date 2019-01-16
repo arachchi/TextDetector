@@ -55,7 +55,7 @@ public class SpeechObserver implements Observer {
                         speechText = suggestionsInfo.getSuggestionAt(0);
                     }
 
-                    textToSpeech.speak(speechText, TextToSpeech.QUEUE_FLUSH, null);
+                    textToSpeech.speak(speechText, TextToSpeech.QUEUE_FLUSH, null, null);
 
                     StringBuilder sb = new StringBuilder();
                     for (int j = 0; j < len; j++) {
@@ -78,10 +78,11 @@ public class SpeechObserver implements Observer {
 
         if (dictionaryWords.contains(text)) {
             System.out.println("-----Detected word is in the dictionary.");
-            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
         } else {
             System.out.println("xxxxxDetected word is not in the dictionary. Looking for suggestions.");
             mScs.getSuggestions(new TextInfo(text), 3);
+            textToSpeech.speak("No Suggestion", TextToSpeech.QUEUE_FLUSH, null, null);
         }
 
     }

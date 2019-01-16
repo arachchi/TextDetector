@@ -131,6 +131,8 @@ public class FirebaseProcessor implements ImageProcessor {
                         new OnFailureListener() {
                             @Override
                             public void onFailure(Exception e) {
+                                System.out.println("Image Recognition Failed.");
+                                Log.d("ERROR", e.getMessage());
                                 // Task failed with an exception
                                 // ...
 

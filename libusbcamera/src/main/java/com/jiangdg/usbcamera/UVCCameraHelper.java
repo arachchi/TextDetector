@@ -19,8 +19,9 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-/** UVCCamera Helper class
- *
+/**
+ * UVCCamera Helper class
+ * <p>
  * Created by jiangdongguo on 2017/9/30.
  */
 
@@ -118,8 +119,8 @@ public class UVCCameraHelper {
                         startPreview(mCamView);
                     }
                 }).start();
-                if(listener != null) {
-                    listener.onConnectDev(device,true);
+                if (listener != null) {
+                    listener.onConnectDev(device, true);
                 }
             }
 
@@ -150,7 +151,7 @@ public class UVCCameraHelper {
             mCameraHandler = null;
         }
         // initialize camera handler
-        mCamView.setAspectRatio(previewWidth / (float)previewHeight);
+        mCamView.setAspectRatio(previewWidth / (float) previewHeight);
         mCameraHandler = UVCCameraHandler.createHandler(mActivity, mCamView, 2,
                 previewWidth, previewHeight, mFrameFormat);
     }
@@ -165,8 +166,8 @@ public class UVCCameraHelper {
             mCameraHandler.release();
             mCameraHandler = null;
         }
-        mCamView.setAspectRatio(previewWidth / (float)previewHeight);
-        mCameraHandler = UVCCameraHandler.createHandler(mActivity,mCamView, 2,
+        mCamView.setAspectRatio(previewWidth / (float) previewHeight);
+        mCameraHandler = UVCCameraHandler.createHandler(mActivity, mCamView, 2,
                 previewWidth, previewHeight, mFrameFormat);
         openCamera(mCtrlBlock);
         new Thread(new Runnable() {
@@ -241,9 +242,9 @@ public class UVCCameraHelper {
         return mUSBMonitor.getDeviceList(deviceFilters.get(0));
     }
 
-    public void capturePicture(String savePath,AbstractUVCCameraHandler.OnCaptureListener listener) {
+    public void capturePicture(String savePath, AbstractUVCCameraHandler.OnCaptureListener listener) {
         if (mCameraHandler != null && mCameraHandler.isOpened()) {
-            mCameraHandler.captureStill(savePath,listener);
+            mCameraHandler.captureStill(savePath, listener);
         }
     }
 
@@ -295,7 +296,7 @@ public class UVCCameraHelper {
     }
 
     public void setOnPreviewFrameListener(AbstractUVCCameraHandler.OnPreViewResultListener listener) {
-        if(mCameraHandler != null) {
+        if (mCameraHandler != null) {
             mCameraHandler.setOnPreViewResultListener(listener);
         }
     }
@@ -331,8 +332,8 @@ public class UVCCameraHelper {
         return mCameraHandler.getSupportedPreviewSizes();
     }
 
-    public void setDefaultPreviewSize(int defaultWidth,int defaultHeight) {
-        if(mUSBMonitor != null) {
+    public void setDefaultPreviewSize(int defaultWidth, int defaultHeight) {
+        if (mUSBMonitor != null) {
             throw new IllegalStateException("setDefaultPreviewSize should be call before initMonitor");
         }
         this.previewWidth = defaultWidth;
@@ -340,7 +341,7 @@ public class UVCCameraHelper {
     }
 
     public void setDefaultFrameFormat(int format) {
-        if(mUSBMonitor != null) {
+        if (mUSBMonitor != null) {
             throw new IllegalStateException("setDefaultFrameFormat should be call before initMonitor");
         }
         this.mFrameFormat = format;
