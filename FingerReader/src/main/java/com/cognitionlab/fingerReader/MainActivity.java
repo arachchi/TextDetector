@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.usb.UsbDevice;
 import android.os.Build;
@@ -40,6 +41,7 @@ import com.serenegiant.usb.CameraDialog;
 import com.serenegiant.usb.USBMonitor;
 import com.serenegiant.usb.common.AbstractUVCCameraHandler;
 import com.serenegiant.usb.widget.CameraViewInterface;
+import com.serenegiant.usb.widget.UVCCameraTextureView;
 
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
@@ -80,6 +82,9 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
 
     @BindView(R.id.usbCameraPreview)
     public View mTextureView;
+
+    public UVCCameraTextureView usbCameraTextureView;
+
     private UVCCameraHelper mCameraHelper;
     public CameraViewInterface mUVCCameraView;
     private boolean isRequest;
@@ -165,6 +170,7 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
         super.onCreate(savedInstanceState);
         this.requestPermissions();
         setContentView(R.layout.activity_main);
+        this.usbCameraTextureView = findViewById(R.id.usbCameraPreview);
 
         ButterKnife.bind(this);
         ButterKnife.setDebug(true);
@@ -217,7 +223,11 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
                 if (action == KeyEvent.ACTION_DOWN) {
                     Log.i("VOL_UP_pressed", String.valueOf(event.getKeyCode()));
                     Toast.makeText(getApplication(), "Image Capture clicked", Toast.LENGTH_SHORT).show();
-                    processingService.getCamera().takePicture(null, null, mPicture);
+                    // processingService.getCamera().takePicture(null, null, mPicture);
+
+                    if (usbCameraTextureView != null) {
+                        usbCameraImageCapture();
+                    }
                 }
                 return true;
 
@@ -323,6 +333,21 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
             }
         };
         return picture;
+    }
+
+    private void usbCameraImageCapture() {
+        Bitmap bitmap = usbCameraTextureView.getBitmap();
+
+        Matrix matrix = new Matrix();
+        matrix.postRotate(90); // anti-clockwise by 90 degrees
+
+        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+
+        ivImage.setImageBitmap(rotatedBitmap);
+
+        if (bitmap != null) {
+            processingService.fullTextRecognition(rotatedBitmap);
+        }
     }
 
     @OnClick(R.id.buttonCapture)
