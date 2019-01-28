@@ -1,14 +1,17 @@
 package com.cognitionlab.fingerReader.services.modules.processing;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
+import com.cognitionlab.fingerReader.database.FeedReaderDbHelper;
 import com.cognitionlab.fingerReader.services.CameraService;
 import com.cognitionlab.fingerReader.services.ProcessingService;
 import com.cognitionlab.fingerReader.services.SearchService;
 import com.cognitionlab.fingerReader.services.SpeechService;
 import com.cognitionlab.fingerReader.services.helpers.adaptors.FirebaseAdaptor;
+import com.cognitionlab.fingerReader.services.helpers.adaptors.TextToSpeechDecorator;
 import com.cognitionlab.fingerReader.services.helpers.observers.ContentNotifier;
 import com.cognitionlab.fingerReader.services.helpers.observers.KeywordMapObserver;
 import com.cognitionlab.fingerReader.services.helpers.callbacks.OpenCVLoaderCallback;
@@ -81,12 +84,12 @@ public class ProcessingServiceModule {
     }
 
     @Provides
-    public SpeechObserver speechObserver(TextToSpeech textToSpeech, @ApplicationContext Context context, Set<String> dictionaryWords) {
+    public SpeechObserver speechObserver(TextToSpeechDecorator textToSpeech, @ApplicationContext Context context, Set<String> dictionaryWords) {
         return new SpeechObserver(textToSpeech, context, dictionaryWords);
     }
 
     @Provides
-    public TextToSpeech textToSpeech(@ApplicationContext Context context) {
+    public TextToSpeechDecorator textToSpeech(@ApplicationContext Context context, SQLiteDatabase sqLiteDatabase) {
         TextToSpeech tts = new TextToSpeech(context, new TextToSpeech.OnInitListener() {
 
             @Override
@@ -102,10 +105,10 @@ public class ProcessingServiceModule {
 
         if (result == TextToSpeech.LANG_MISSING_DATA
                 || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            Log.d("TTS ERROR","Issue with Text To Speech, either lang missing or lang not supported.");
+            Log.d("TTS ERROR", "Issue with Text To Speech, either lang missing or lang not supported.");
         }
 
-        return tts;
+        return new TextToSpeechDecorator(tts, sqLiteDatabase);
     }
 
     @Provides
@@ -163,5 +166,26 @@ public class ProcessingServiceModule {
         }
 
         return wordsSet;
+    }
+
+    @Provides
+    public SQLiteDatabase sqLiteDatabase(@ApplicationContext Context context) {
+        FeedReaderDbHelper dbHelper = new FeedReaderDbHelper(context);
+
+        try {
+            dbHelper.createDataBase();
+            System.out.println("DB CREated. NR");
+        } catch (Exception e) {
+            System.out.println("DB not CREated. NR");
+        }
+
+        try {
+            dbHelper.openDataBase();
+            System.out.println("DB Opened. NR");
+        } catch (Exception e) {
+            System.out.println("DB not Opened. NR");
+        }
+
+        return dbHelper.getDatabase();
     }
 }

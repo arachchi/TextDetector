@@ -2,12 +2,16 @@ package com.cognitionlab.fingerReader.services.helpers.observers;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.speech.tts.TextToSpeech;
 import android.view.textservice.SentenceSuggestionsInfo;
 import android.view.textservice.SpellCheckerSession;
 import android.view.textservice.SuggestionsInfo;
 import android.view.textservice.TextInfo;
 import android.view.textservice.TextServicesManager;
+
+import com.cognitionlab.fingerReader.services.helpers.adaptors.TextToSpeechDecorator;
 
 import java.util.Locale;
 import java.util.Observable;
@@ -16,14 +20,14 @@ import java.util.Set;
 
 public class SpeechObserver implements Observer {
 
-    private TextToSpeech textToSpeech;
+    private TextToSpeechDecorator textToSpeech;
 
     private Context context;
     private AssetManager assetManager;
     private TextServicesManager textServicesManager;
     private Set<String> dictionaryWords;
 
-    public SpeechObserver(TextToSpeech textToSpeech, Context context, Set<String> dictionaryWords) {
+    public SpeechObserver(TextToSpeechDecorator textToSpeech, Context context, Set<String> dictionaryWords) {
         this.textToSpeech = textToSpeech;
         this.context = context;
         this.assetManager = context.getAssets();
@@ -51,11 +55,11 @@ public class SpeechObserver implements Observer {
                     String speechText;
                     if (len == -1) {
                         speechText = text;
+                        textToSpeech.speakTextAndMeaning(speechText);
                     } else {
                         speechText = suggestionsInfo.getSuggestionAt(0);
+                        textToSpeech.speakText("Suggested Meaning is " + speechText);
                     }
-
-                    textToSpeech.speak(speechText, TextToSpeech.QUEUE_FLUSH, null, null);
 
                     StringBuilder sb = new StringBuilder();
                     for (int j = 0; j < len; j++) {
@@ -78,7 +82,7 @@ public class SpeechObserver implements Observer {
 
         if (dictionaryWords.contains(text)) {
             System.out.println("-----Detected word is in the dictionary.");
-            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+            textToSpeech.speakTextAndMeaning(text);
         } else {
             System.out.println("xxxxxDetected word is not in the dictionary. Looking for suggestions.");
             mScs.getSuggestions(new TextInfo(text), 3);

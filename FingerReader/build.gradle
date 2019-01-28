@@ -53,6 +53,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-ml-vision:18.0.2'
     implementation 'com.google.firebase:firebase-core:16.0.6'
     implementation 'org.apache.lucene:lucene-suggest:4.10.4'
+
+    implementation 'org.greenrobot:greendao:3.2.2'
 }
 
+apply plugin: 'org.greenrobot.greendao'
 apply plugin: 'com.google.gms.google-services'
