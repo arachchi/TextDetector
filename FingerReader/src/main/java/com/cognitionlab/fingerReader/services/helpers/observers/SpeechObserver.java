@@ -82,7 +82,6 @@ public class SpeechObserver implements Observer {
         } else {
             System.out.println("xxxxxDetected word is not in the dictionary. Looking for suggestions.");
             mScs.getSuggestions(new TextInfo(text), 3);
-            textToSpeech.speak("No Suggestion", TextToSpeech.QUEUE_FLUSH, null, null);
         }
 
     }

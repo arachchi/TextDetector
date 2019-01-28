@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.cognitionlab.fingerReader.dtos.DataExtractionDTO;
@@ -17,7 +18,11 @@ import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 import com.google.firebase.ml.vision.text.RecognizedLanguage;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -97,8 +102,44 @@ public class FirebaseProcessor implements ImageProcessor {
                     @Override
                     public void onSuccess(FirebaseVisionText result) {
                         // Task completed successfully
-
+                        List<Point[]> textBlocksList = new ArrayList<>();
+                        FirebaseVisionText.TextBlock selectedTextBlock = null;
+                        Point[] selectedBlock;
+                        Point[] currentBlock;
                         String resultText = result.getText();
+                        HashMap<Integer, List<FirebaseVisionText.TextBlock>> map = new HashMap<>();
+
+                        System.out.println(resultText);
+
+                        for (FirebaseVisionText.TextBlock block : result.getTextBlocks()) {
+                            int index = block.getCornerPoints()[0].y;
+                            List<FirebaseVisionText.TextBlock> list;
+                            if (map.get(index) == null) {
+                                list = new ArrayList<>();
+                            } else {
+                                list = map.get(index);
+                            }
+
+                            if (!TextUtils.isDigitsOnly(block.getText())) {
+                                list.add(block);
+                            }
+
+                            map.put(index, list);
+                        }
+
+                        List<Integer> keySet = new ArrayList<>(map.keySet());
+                        Collections.sort(keySet);
+
+                        if (!keySet.isEmpty()) {
+                            int bottomY = keySet.get(keySet.size() - 1);
+                            List<FirebaseVisionText.TextBlock> list = map.get(bottomY);
+                            int listSize = list.size();
+                            int selectedWordIndex = 0;
+
+                            selectedTextBlock = list.get(0);
+                            resultText = selectedTextBlock.getText();
+                        }
+
                         Log.d("TIME", "Processing Finished " + new Date());
                         for (FirebaseVisionText.TextBlock block : result.getTextBlocks()) {
                             String blockText = block.getText();
@@ -106,6 +147,18 @@ public class FirebaseProcessor implements ImageProcessor {
                             List<RecognizedLanguage> blockLanguages = block.getRecognizedLanguages();
                             Point[] blockCornerPoints = block.getCornerPoints();
                             Rect blockFrame = block.getBoundingBox();
+
+                            if (selectedTextBlock == null) {
+                                selectedTextBlock = block;
+                            } else {
+                                selectedBlock = selectedTextBlock.getCornerPoints();
+                                currentBlock = block.getCornerPoints();
+                                Point sp0 = selectedBlock[0], sp1 = selectedBlock[2];
+                                Point p0 = currentBlock[0], p1 = currentBlock[2];
+
+                            }
+
+
                             for (FirebaseVisionText.Line line : block.getLines()) {
                                 String lineText = line.getText();
                                 Float lineConfidence = line.getConfidence();

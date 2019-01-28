@@ -79,6 +79,8 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
     LinearLayout cameraPreview;
     @BindView(R.id.searchText)
     EditText editText;
+    @BindView(R.id.btnTry)
+    Button btnTryAgain;
 
     @BindView(R.id.usbCameraPreview)
     public View mTextureView;
@@ -302,6 +304,13 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
         this.showToast(message);
     }
 
+    @OnClick(R.id.btnTry)
+    void retryImage() {
+        if (this.bitmap != null) {
+            processingService.fullTextRecognition(this.bitmap);
+        }
+    }
+
     //This is for the in-built Camera
     private Camera.PictureCallback getPictureCallback() {
         Camera.PictureCallback picture = new Camera.PictureCallback() {
@@ -346,6 +355,7 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
         ivImage.setImageBitmap(rotatedBitmap);
 
         if (bitmap != null) {
+            this.bitmap = rotatedBitmap;
             processingService.fullTextRecognition(rotatedBitmap);
         }
     }
