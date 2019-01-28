@@ -50,8 +50,8 @@ dependencies {
     annotationProcessor "org.androidannotations:androidannotations:$AAVersion"
     implementation "org.androidannotations:androidannotations-api:$AAVersion"
 
-    implementation 'com.google.firebase:firebase-ml-vision:18.0.1'
-    implementation 'com.google.firebase:firebase-core:16.0.4'
+    implementation 'com.google.firebase:firebase-ml-vision:18.0.2'
+    implementation 'com.google.firebase:firebase-core:16.0.6'
     implementation 'org.apache.lucene:lucene-suggest:4.10.4'
 }
 
