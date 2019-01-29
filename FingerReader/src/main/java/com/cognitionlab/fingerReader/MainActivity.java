@@ -30,6 +30,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cognitionlab.fingerReader.cameras.camera.CameraSourcePreview;
 import com.cognitionlab.fingerReader.dtos.SearchDTO;
 import com.cognitionlab.fingerReader.services.ProcessingService;
 import com.cognitionlab.fingerReader.services.helpers.observers.ContentObserver;
@@ -76,7 +77,7 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
     @BindView(R.id.buttonChangeCamera)
     Button buttonChangeCamera;
     @BindView(R.id.cameraPreview)
-    LinearLayout cameraPreview;
+    CameraSourcePreview cameraPreview;
     @BindView(R.id.searchText)
     EditText editText;
     @BindView(R.id.btnTry)
@@ -157,7 +158,6 @@ public class MainActivity extends Activity implements CameraDialog.CameraDialogP
         }
     };
 
-    private String userChoosenTask;
     private Bitmap bitmap;
     private Camera.PictureCallback mPicture;
     private Context myContext;

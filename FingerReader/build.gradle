@@ -54,8 +54,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:16.0.6'
     implementation 'org.apache.lucene:lucene-suggest:4.10.4'
 
-    implementation 'org.greenrobot:greendao:3.2.2'
+    implementation 'com.google.android.gms:play-services-vision:15.0.0'
 }
 
-apply plugin: 'org.greenrobot.greendao'
 apply plugin: 'com.google.gms.google-services'
