@@ -29,8 +29,8 @@ public class TextToSpeechDecorator {
             String word = resultSet.getString(resultSet.getColumnIndex("word"));
             String gloss = resultSet.getString(resultSet.getColumnIndex("gloss"));
 
-            System.out.println(word + "  " + gloss);
-            String filler = "the meaning is \n";
+            System.out.println(word + " " + gloss);
+            String filler = "\n meaning is \n";
             String speakText = word + " " + filler + " " + gloss;
 
             this.speakText(speakText);

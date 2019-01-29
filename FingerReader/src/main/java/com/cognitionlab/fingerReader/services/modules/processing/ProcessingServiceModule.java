@@ -69,8 +69,8 @@ public class ProcessingServiceModule {
     }
 
     @Provides
-    public ProcessingAdaptor processingAdaptor(@ApplicationContext Context context, ContentNotifier contentNotifier) {
-        return new FirebaseAdaptor(context, contentNotifier);
+    public ProcessingAdaptor processingAdaptor(@ApplicationContext Context context, ContentNotifier contentNotifier, Set<String> dictionaryWords) {
+        return new FirebaseAdaptor(context, contentNotifier, dictionaryWords);
     }
 
     @Provides

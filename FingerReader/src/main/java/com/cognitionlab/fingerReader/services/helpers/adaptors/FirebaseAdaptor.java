@@ -11,13 +11,14 @@ import com.cognitionlab.fingerReader.services.helpers.observers.ContentNotifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class FirebaseAdaptor implements ProcessingAdaptor {
 
     private FirebaseProcessor firebaseProcessor;
 
-    public FirebaseAdaptor(Context context, ContentNotifier contentNotifier) {
-        this.firebaseProcessor = new FirebaseProcessor(context, contentNotifier);
+    public FirebaseAdaptor(Context context, ContentNotifier contentNotifier,Set<String> dictionaryWords) {
+        this.firebaseProcessor = new FirebaseProcessor(context, contentNotifier,dictionaryWords);
     }
 
     @Override

@@ -25,14 +25,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class FirebaseProcessor implements ImageProcessor {
 
     private ContentNotifier contentNotifier;
+    private Set<String> dictionaryWords;
 
-    public FirebaseProcessor(Context context, ContentNotifier contentNotifier) {
+    public FirebaseProcessor(Context context, ContentNotifier contentNotifier, Set<String> dictionaryWords) {
         FirebaseApp.initializeApp(context);
         this.contentNotifier = contentNotifier;
+        this.dictionaryWords = dictionaryWords;
     }
 
     @Override
@@ -107,6 +110,8 @@ public class FirebaseProcessor implements ImageProcessor {
                         Point[] selectedBlock;
                         Point[] currentBlock;
                         String resultText = result.getText();
+                        String totalResultProcessedText = processSelectedText(resultText);
+                        boolean garbageIgnorable = !totalResultProcessedText.isEmpty();
                         HashMap<Integer, List<FirebaseVisionText.TextBlock>> map = new HashMap<>();
 
                         System.out.println(resultText);
@@ -120,11 +125,11 @@ public class FirebaseProcessor implements ImageProcessor {
                                 list = map.get(index);
                             }
 
-                            if (!TextUtils.isDigitsOnly(block.getText())) {
+                            if (!processSelectedText(block.getText()).isEmpty()) {
                                 list.add(block);
+                                map.put(index, list);
                             }
 
-                            map.put(index, list);
                         }
 
                         List<Integer> keySet = new ArrayList<>(map.keySet());
@@ -175,6 +180,11 @@ public class FirebaseProcessor implements ImageProcessor {
                             }
                         }
 
+                        String processedText = processSelectedText(resultText);
+                        if (!processedText.isEmpty()) {
+                            resultText = processedText;
+                        }
+
                         dataExtractionDTO.setContent(resultText);
                         System.out.println(resultText);
                         contentNotifier.setDataExtractionDTO(dataExtractionDTO);
@@ -192,5 +202,23 @@ public class FirebaseProcessor implements ImageProcessor {
                             }
                         });
 
+    }
+
+    private String processSelectedText(String resultText) {
+        String result = "";
+        String[] wordList = resultText.split("\\W+");
+        List<String> meaningFullWords = new ArrayList<>();
+
+        for (String word : wordList) {
+            if (!word.isEmpty() && dictionaryWords.contains(word)) {
+                meaningFullWords.add(word);
+            }
+        }
+
+        if (!meaningFullWords.isEmpty()) {
+            result = meaningFullWords.get(meaningFullWords.size() - 1);
+        }
+
+        return result;
     }
 }
