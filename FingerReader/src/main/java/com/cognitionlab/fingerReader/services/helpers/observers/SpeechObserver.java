@@ -76,7 +76,7 @@ public class SpeechObserver implements Observer {
 
             @Override
             public void onGetSentenceSuggestions(SentenceSuggestionsInfo[] results) {
-                System.out.println("HERE baby here");
+                System.out.println("Sentence Suggestions");
             }
         }, true);
 

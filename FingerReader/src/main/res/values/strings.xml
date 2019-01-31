@@ -9,5 +9,6 @@
     <string name="search_text_not_found">Please enter text to search.</string>
     <string name="select_file_title">Select file</string>
     <string name="add_photo_title">Add Photo!</string>
+    <string name="low_storage_error">Storage is low</string>
     <string name="provide_photo_permission">Please provide permission to access.</string>
 </resources>
