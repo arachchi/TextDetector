@@ -25,10 +25,13 @@ import com.cognitionlab.fingerReader.services.modules.camera.CameraServiceModule
 import com.cognitionlab.fingerReader.services.modules.search.SearchServiceModule;
 import com.cognitionlab.fingerReader.services.modules.speech.SpeechServiceModule;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -155,12 +158,13 @@ public class ProcessingServiceModule {
             }
         }
         try {
-            Path path = Paths.get(file.toURI());
-            byte[] readBytes = Files.readAllBytes(path);
-            String wordListContents = new String(readBytes, "UTF-8");
-            String[] words = wordListContents.split("\n"); //the text file should contain one word in one line
-
-            Collections.addAll(wordsSet, words);
+            FileInputStream fin = new FileInputStream(file.toURI().getPath());
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(fin, "UTF-8"))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    wordsSet.add(line);
+                }
+            }
         } catch (Exception e) {
 
         }

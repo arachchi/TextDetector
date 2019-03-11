@@ -29,21 +29,6 @@
 
         </LinearLayout>
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="fill_parent"
-            android:layout_height="500dp"
-            android:orientation="vertical"
-            android:rotation="90">
-
-            <com.serenegiant.usb.widget.UVCCameraTextureView
-                android:id="@+id/usbCameraPreview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_vertical">
-            </com.serenegiant.usb.widget.UVCCameraTextureView>
-
-        </LinearLayout>
-
         <LinearLayout
             android:id="@+id/buttonsLayout"
             android:layout_width="match_parent"

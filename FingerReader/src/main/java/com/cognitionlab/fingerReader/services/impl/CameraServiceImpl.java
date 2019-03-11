@@ -56,7 +56,7 @@ public class CameraServiceImpl implements CameraService {
         image = BitmapFactory.decodeByteArray(data, 0, data.length, options);
 
         Matrix matrix = new Matrix();
-        matrix.postRotate(90);
+        matrix.postRotate(0);
 
         bm = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
 

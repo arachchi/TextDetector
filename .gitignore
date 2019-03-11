@@ -68,3 +68,8 @@ openCVLibrary340/build/*
 openCVLibrary340/build*
 openCVLibrary340/*
 openCVLibrary340/
+/openCVLibrary340/
+/openCVLibrary340/build
+/openCVLibrary340/build/*
+openCVLibrary340/build/intermediates/incremental/packageDebugResources/compile-file-map.properties
+/openCVLibrary340/build/
