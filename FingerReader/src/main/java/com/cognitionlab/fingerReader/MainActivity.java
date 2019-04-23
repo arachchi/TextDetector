@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -54,12 +55,15 @@ import org.opencv.android.OpenCVLoader;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -152,6 +156,36 @@ public class MainActivity extends Activity {
         processingService.getCamera().startPreview();
         startCameraSource();
 
+        String[] permissions = new String[]{
+                Manifest.permission.INTERNET,
+                Manifest.permission.READ_PHONE_STATE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.RECORD_AUDIO,
+        };
+
+        int result;
+        List<String> listPermissionsNeeded = new ArrayList<>();
+        for (String p : permissions) {
+            result = ContextCompat.checkSelfPermission(this, p);
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                listPermissionsNeeded.add(p);
+            }
+        }
+        if (!listPermissionsNeeded.isEmpty()) {
+            ActivityCompat.requestPermissions(this, listPermissionsNeeded.toArray(new String[listPermissionsNeeded.size()]), 100);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (requestCode == 100) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // do something
+            }
+            return;
+        }
     }
 
     @Override
@@ -256,7 +290,7 @@ public class MainActivity extends Activity {
                 fos.close();
                 Toast toast = Toast.makeText(myContext, "Picture saved: " + pictureFile.getName(), Toast.LENGTH_LONG);
                 toast.show();
-
+                System.out.println("Image captured.");
 
             } catch (FileNotFoundException e) {
             } catch (IOException e) {
@@ -279,7 +313,7 @@ public class MainActivity extends Activity {
 
         } catch (Exception ex) {
 
-        }finally {
+        } finally {
             startCameraSource();
         }
     }
@@ -287,7 +321,7 @@ public class MainActivity extends Activity {
     //make picture and save to a folder
     private static File getOutputMediaFile() {
         //make a new file directory inside the "sdcard" folder
-        File mediaStorageDir = new File("/sdcard/", "JCG Camera");
+        File mediaStorageDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "FingerReader");
 
         //if this "JCGCamera folder does not exist
         if (!mediaStorageDir.exists()) {

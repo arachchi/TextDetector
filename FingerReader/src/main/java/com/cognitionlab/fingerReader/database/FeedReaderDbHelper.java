@@ -11,11 +11,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Scanner;
 
 public class FeedReaderDbHelper extends SQLiteOpenHelper {
     // If you change the database schema, you must increment the database version.
-    public static final int DATABASE_VERSION = 1;
-    public static final String DATABASE_NAME = "mydb";
+    public static final int DATABASE_VERSION = 2;
+    public static final String DATABASE_NAME = "dic";
     public static final String ASSETS_PATH = "databases";
     private final String DB_PATH;
     private final Context myContext;
@@ -56,18 +59,38 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
     }
 
     private void installDatabaseFromAssets(Context context) {
-        System.out.println("Database Creation Started.");
-        InputStream inputStream = null;
-        OutputStream outputStream = null;
-        try {
-            inputStream = context.getAssets().open(ASSETS_PATH + File.separator + DATABASE_NAME + ".sqlite3");
-            File outputFile = context.getDatabasePath(DATABASE_NAME);
-            outputStream = new FileOutputStream(outputFile);
+        SimpleDateFormat time_formatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss.SSS");
+        System.out.println("Database Creation Started. " + time_formatter.format(System.currentTimeMillis()));
+        File outputFile = context.getDatabasePath(DATABASE_NAME);
+        int counter = 0;
+        int val = 0;
+
+//        try (Scanner inputFile = new Scanner(context.getAssets().open(ASSETS_PATH + File.separator + DATABASE_NAME + ".sqlite3"));
+//             PrintWriter writer = new PrintWriter(outputFile)) {
+//            while (inputFile.hasNext()) {
+//                writer.print(inputFile.nextLine());
+//
+//                counter++;
+//                if (counter == 1000000) {
+//                    System.out.println(val++);
+//                    counter = 0;
+//                }
+//            }
+//
+//            System.out.println("Database Creation completed. " + time_formatter.format(System.currentTimeMillis()));
+//        } catch (Exception exception) {
+//            System.out.println("Database Creation Failed");
+//            throw new RuntimeException("The DATABASE_NAME database couldn't be installed.", exception);
+//        }
+
+        try (
+                InputStream inputStream = context.getAssets().open(ASSETS_PATH + File.separator + DATABASE_NAME + ".sqlite3");
+                OutputStream outputStream = new FileOutputStream(outputFile)) {
 
             int c;
-            int counter = 0;
-            int val = 0;
-            while ((c = inputStream.read()) != -1) {
+            while ((c = inputStream.read()) != -1)
+
+            {
                 outputStream.write(c);
 
                 counter++;
@@ -76,26 +99,19 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
                     counter = 0;
                 }
             }
-
-            inputStream.close();
-
             outputStream.flush();
-            outputStream.close();
+            System.out.println("Database Creation completed. " + time_formatter.format(System.currentTimeMillis()));
         } catch (Exception exception) {
+            System.out.println("Database Creation Failed");
             throw new RuntimeException("The DATABASE_NAME database couldn't be installed.", exception);
-        } finally {
-
-
         }
-
-        System.out.println("Database Creation completed.");
     }
 
     public void createDataBase() throws IOException {
 
         boolean dbExist = checkDataBase();
 
-        if (dbExist ) {
+        if (dbExist) {
             //do nothing - database already exist
         } else {
 
@@ -105,7 +121,7 @@ public class FeedReaderDbHelper extends SQLiteOpenHelper {
 
             try {
 
-                installDatabaseFromAssets(myContext);
+//                installDatabaseFromAssets(myContext);
 
             } catch (Exception e) {
 
