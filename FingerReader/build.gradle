@@ -34,6 +34,7 @@ def AAVersion = '4.4.0'
 dependencies {
     //noinspection GradleCompatible
     implementation 'com.android.support:appcompat-v7:27.0.1'
+    implementation 'com.android.support:design:27.0.1'
     implementation 'com.rmtheis:tess-two:6.0.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.jakewharton:butterknife:8.8.1'

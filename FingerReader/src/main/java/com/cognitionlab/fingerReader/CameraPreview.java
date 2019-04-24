@@ -1,7 +1,9 @@
 package com.cognitionlab.fingerReader;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -18,6 +20,14 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         mHolder = getHolder();
         mHolder.addCallback(this);
         // deprecated setting, but required on Android versions prior to 3.0
+        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+    }
+
+    public CameraPreview(Context context, AttributeSet attrs) {
+        super(context, attrs);
+
+        mHolder = getHolder();
+        mHolder.addCallback(this);
         mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 

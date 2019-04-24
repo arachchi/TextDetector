@@ -43,20 +43,6 @@
                 android:text="Switch Camera" />
         </LinearLayout>
 
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:padding="2dp">
-
-            <Button
-                android:id="@+id/buttonCapture"
-                android:layout_width="match_parent"
-                android:layout_height="60dp"
-                android:text="Capture" />
-        </LinearLayout>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -78,12 +64,6 @@
             android:background="@drawable/rect"
             android:gravity="center"
             android:text="@string/image_text_hint" />
-
-        <Button
-            android:id="@+id/btnTry"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Try Again" />
 
         <EditText
             android:id="@+id/searchText"

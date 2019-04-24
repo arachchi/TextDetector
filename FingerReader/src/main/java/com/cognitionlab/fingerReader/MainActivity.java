@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,7 +23,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -71,7 +75,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity{
 
     private static final String TAG = "fingerReader";
     // Intent request code to handle updating play services if needed.
@@ -126,6 +130,13 @@ public class MainActivity extends Activity {
         this.requestPermissions();
         setContentView(R.layout.activity_main);
 
+        LayoutInflater controlInflater = LayoutInflater.from(getBaseContext());
+        View viewControl = controlInflater.inflate(R.layout.control, null);
+        ViewGroup.LayoutParams layoutParamsControl
+                = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.FILL_PARENT);
+        this.addContentView(viewControl, layoutParamsControl);
+
         ButterKnife.bind(this);
         ButterKnife.setDebug(true);
         ApplicationComponent component = DaggerApplicationComponent.builder()
@@ -149,6 +160,14 @@ public class MainActivity extends Activity {
         }
 
         //Complete
+
+
+//      Create over lay as well as floating buttons in the app
+//        Create a overlay on the camera previous just capture the image within the box. <- Do this.
+        // Float the buttons on the camera previous if possible <- this is last
+        // A pop up should appear until the word is pronounced.
+//        Send these images to an end point with image and detected text, context data.
+
 
         processingService.setTessOCR(MainActivity.this, getAssets());
         this.contentObserver = new ContentObserver(bitmap, textView);

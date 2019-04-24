@@ -18,12 +18,16 @@ package com.cognitionlab.fingerReader.cameras.camera;
 import android.Manifest;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.hardware.Camera;
 import android.support.annotation.RequiresPermission;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.google.android.gms.common.images.Size;
 
@@ -48,6 +52,7 @@ public class CameraSourcePreview extends ViewGroup {
 
         mSurfaceView = new SurfaceView(context);
         mSurfaceView.getHolder().addCallback(new SurfaceCallback());
+        mSurfaceView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         addView(mSurfaceView);
     }
 
@@ -112,7 +117,7 @@ public class CameraSourcePreview extends ViewGroup {
             try {
                 startIfReady();
             } catch (SecurityException se) {
-                Log.e(TAG,"Do not have permission to start the camera", se);
+                Log.e(TAG, "Do not have permission to start the camera", se);
             } catch (IOException e) {
                 Log.e(TAG, "Could not start camera source.", e);
             }
