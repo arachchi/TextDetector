@@ -25,7 +25,6 @@ public class TextToSpeechDecorator {
             text = "'".concat(text.concat("'"));
             String query = "select word, gloss from wn_synset s inner join wn_gloss g on s.synset_id = g.synset_id where s.word = " + text;
             Cursor resultSet = sqLiteDatabase.rawQuery(query, null);
-            Integer value = resultSet.getCount();
 
             if (resultSet.moveToNext()) {
                 String word = resultSet.getString(resultSet.getColumnIndex("word"));

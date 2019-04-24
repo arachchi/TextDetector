@@ -7,18 +7,21 @@
         android:id="@+id/LinearLayout1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="10dp">
+        android:orientation="vertical">
 
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/cameraLayOut"
             android:layout_width="fill_parent"
             android:layout_height="500dp"
             android:orientation="vertical">
 
+
             <com.cognitionlab.fingerReader.cameras.camera.CameraSourcePreview
                 android:id="@+id/cameraPreview"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:focusable="true"
+                android:focusableInTouchMode="true">
 
                 <com.cognitionlab.fingerReader.cameras.camera.GraphicOverlay
                     android:id="@+id/graphicOverlay"
@@ -31,8 +34,8 @@
 
         <LinearLayout
             android:id="@+id/buttonsLayout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:layout_gravity="center"
             android:orientation="vertical">
 
@@ -44,8 +47,8 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:gravity="center"
             android:orientation="vertical"
             android:padding="4dp">
@@ -57,41 +60,49 @@
                 android:src="@drawable/ic_launcher" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/txtView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/rect"
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:gravity="center"
-            android:text="@string/image_text_hint" />
+            android:orientation="vertical"
+            android:padding="4dp">
 
-        <EditText
-            android:id="@+id/searchText"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:ems="10"
-            android:hint="@string/edit_text_hint"
-            android:inputType="textAutoComplete" />
+            <TextView
+                android:id="@+id/txtView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rect"
+                android:gravity="center"
+                android:text="@string/image_text_hint" />
 
-        <Button
-            android:id="@+id/btnSeachText"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:text="Search" />
+            <EditText
+                android:id="@+id/searchText"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:ems="10"
+                android:hint="@string/edit_text_hint"
+                android:inputType="textAutoComplete" />
 
-        <CheckBox
-            android:id="@+id/caseSensitive"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:checked="true"
-            android:text="Case Sensitive" />
+            <Button
+                android:id="@+id/btnSeachText"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:text="Search" />
 
-        <CheckBox
-            android:id="@+id/onlyAlphaNumeric"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:checked="false"
-            android:text="Only Alpha Numeric" />
+            <CheckBox
+                android:id="@+id/caseSensitive"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:checked="true"
+                android:text="Case Sensitive" />
+
+            <CheckBox
+                android:id="@+id/onlyAlphaNumeric"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:checked="false"
+                android:text="Only Alpha Numeric" />
+        </LinearLayout>
 
     </LinearLayout>
 
