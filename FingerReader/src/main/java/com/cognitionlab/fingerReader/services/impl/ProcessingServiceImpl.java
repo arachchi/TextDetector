@@ -103,4 +103,9 @@ public class ProcessingServiceImpl implements ProcessingService {
         searchDTO.setKeywordsMap(this.keywordMapObserver.getKeywordsMap());
         return searchService.searchText(searchDTO);
     }
+
+    @Override
+    public ContentNotifier getContentNotifier() {
+        return contentNotifier;
+    }
 }

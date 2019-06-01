@@ -18,8 +18,12 @@ package com.cognitionlab.fingerReader.cameras.camera;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
+import com.cognitionlab.fingerReader.cameras.graphics.OcrGraphic;
+import com.cognitionlab.fingerReader.dtos.DataExtractionDTO;
+import com.cognitionlab.fingerReader.services.helpers.observers.ContentNotifier;
 import com.google.android.gms.vision.CameraSource;
 
 import java.util.HashSet;
@@ -29,11 +33,11 @@ import java.util.Set;
  * A view which renders a series of custom graphics to be overlaid on top of an associated preview
  * (i.e., the camera preview).  The creator can add graphics objects, update the objects, and remove
  * them, triggering the appropriate drawing and invalidation within the view.<p>
- *
+ * <p>
  * Supports scaling and mirroring of the graphics relative the camera's preview properties.  The
  * idea is that detection items are expressed in terms of a preview size, but need to be scaled up
  * to the full view size, and also mirrored in the case of the front-facing camera.<p>
- *
+ * <p>
  * Associated {@link Graphic} items should use the following methods to convert to view coordinates
  * for the graphics that are drawn:
  * <ol>
@@ -51,6 +55,8 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     private float mHeightScaleFactor = 1.0f;
     private int mFacing = CameraSource.CAMERA_FACING_BACK;
     private Set<T> mGraphics = new HashSet<>();
+
+    private ContentNotifier contentNotifier;
 
     /**
      * Base class for a custom graphics object to be rendered within the graphic overlay.  Subclass
@@ -125,6 +131,25 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
 
     public GraphicOverlay(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    System.out.println("Touch coordinates : " +
+                            String.valueOf(event.getX()) + "x" + String.valueOf(event.getY()));
+
+                    for(Graphic graphic : mGraphics){
+                        OcrGraphic g = (OcrGraphic) graphic;
+                        if (g.contains(event.getX(),event.getY())){
+                            DataExtractionDTO dataExtractionDTO = new DataExtractionDTO();
+                            dataExtractionDTO.setContent(g.getTextBlock().getValue());
+                            contentNotifier.setDataExtractionDTO(dataExtractionDTO);
+                        }
+                    }
+                }
+                return true;
+            }
+        });
     }
 
     /**
@@ -160,6 +185,7 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     /**
      * Returns the first graphic, if any, that exists at the provided absolute screen coordinates.
      * These coordinates will be offset by the relative screen position of this view.
+     *
      * @return First graphic containing the point, or null if no text is detected.
      */
     public T getGraphicAtLocation(float rawX, float rawY) {
@@ -189,12 +215,21 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
         postInvalidate();
     }
 
+    public ContentNotifier getContentNotifier() {
+        return contentNotifier;
+    }
+
+    public void setContentNotifier(ContentNotifier contentNotifier) {
+        this.contentNotifier = contentNotifier;
+    }
+
     /**
      * Draws the overlay with its associated graphic objects.
      */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
 
         synchronized (mLock) {
             if ((mPreviewWidth != 0) && (mPreviewHeight != 0)) {
@@ -203,8 +238,11 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
             }
 
             for (Graphic graphic : mGraphics) {
-                graphic.draw(canvas);
+                OcrGraphic g = (OcrGraphic) graphic;
+
+                g.draw(canvas);
             }
         }
+
     }
 }

@@ -60,8 +60,8 @@ public class CameraServiceImpl implements CameraService {
 
         bm = Bitmap.createBitmap(image, 0, 0, image.getWidth(), image.getHeight(), matrix, true);
 
-        bm = toGrayScale(bm);
-        bm = toReducedSize(bm);
+//        bm = toGrayScale(bm);
+//        bm = toReducedSize(bm);
 
         return bm;
     }

@@ -7,6 +7,7 @@ import android.hardware.Camera;
 
 import com.cognitionlab.fingerReader.CameraPreview;
 import com.cognitionlab.fingerReader.dtos.SearchDTO;
+import com.cognitionlab.fingerReader.services.helpers.observers.ContentNotifier;
 
 import org.opencv.android.BaseLoaderCallback;
 
@@ -33,4 +34,6 @@ public interface ProcessingService {
     Bitmap searchText(SearchDTO searchDTO);
 
     void addProcessingContentObserver(Observer observer);
+
+    ContentNotifier getContentNotifier();
 }

@@ -8,6 +8,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,6 +20,7 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -37,18 +40,31 @@ import com.cognitionlab.fingerReader.cameras.camera.CameraSourcePreview;
 import com.cognitionlab.fingerReader.cameras.camera.GraphicOverlay;
 import com.cognitionlab.fingerReader.cameras.graphics.OcrDetectorProcessor;
 import com.cognitionlab.fingerReader.cameras.graphics.OcrGraphic;
+import com.cognitionlab.fingerReader.dtos.DataExtractionDTO;
 import com.cognitionlab.fingerReader.dtos.SearchDTO;
 import com.cognitionlab.fingerReader.services.ProcessingService;
+import com.cognitionlab.fingerReader.services.helpers.observers.ContentNotifier;
 import com.cognitionlab.fingerReader.services.helpers.observers.ContentObserver;
 import com.cognitionlab.fingerReader.services.modules.ApplicationComponent;
 import com.cognitionlab.fingerReader.services.modules.ContextModule;
 import com.cognitionlab.fingerReader.services.modules.DaggerApplicationComponent;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.vision.text.TextRecognizer;
+import com.google.firebase.ml.vision.FirebaseVision;
+import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.text.FirebaseVisionText;
+import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
+import com.google.firebase.ml.vision.text.RecognizedLanguage;
 
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -56,7 +72,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -83,16 +101,16 @@ public class MainActivity extends Activity {
     CheckBox caseSensitive;
     @BindView(R.id.onlyAlphaNumeric)
     CheckBox onlyAlphaNumeric;
-    @BindView(R.id.buttonCapture)
-    Button buttonCapture;
+//    @BindView(R.id.buttonCapture)
+//    Button buttonCapture;
     @BindView(R.id.buttonChangeCamera)
     Button buttonChangeCamera;
     @BindView(R.id.cameraPreview)
     CameraSourcePreview mPreview;
     @BindView(R.id.searchText)
     EditText editText;
-    @BindView(R.id.btnTry)
-    Button btnTryAgain;
+//    @BindView(R.id.btnTry)
+//    Button btnTryAgain;
     @BindView(R.id.graphicOverlay)
     GraphicOverlay<OcrGraphic> ocrGraphicOverlay;
 
@@ -120,12 +138,12 @@ public class MainActivity extends Activity {
         this.requestPermissions();
         setContentView(R.layout.activity_main);
 
-        LayoutInflater controlInflater = LayoutInflater.from(getBaseContext());
-        View viewControl = controlInflater.inflate(R.layout.control, null);
-        ViewGroup.LayoutParams layoutParamsControl
-                = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                ViewGroup.LayoutParams.FILL_PARENT);
-        this.addContentView(viewControl, layoutParamsControl);
+//        LayoutInflater controlInflater = LayoutInflater.from(getBaseContext());
+//        View viewControl = controlInflater.inflate(R.layout.control, null);
+//        ViewGroup.LayoutParams layoutParamsControl
+//                = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+//                ViewGroup.LayoutParams.FILL_PARENT);
+//        this.addContentView(viewControl, layoutParamsControl);
 
         ButterKnife.bind(this);
         ButterKnife.setDebug(true);
@@ -148,7 +166,6 @@ public class MainActivity extends Activity {
         } else {
             requestCameraPermission();
         }
-
         //Complete
 
 
@@ -163,6 +180,7 @@ public class MainActivity extends Activity {
         this.contentObserver = new ContentObserver(bitmap, textView);
         processingService.addProcessingContentObserver(this.contentObserver);
         processingService.getCamera().startPreview();
+        this.ocrGraphicOverlay.setContentNotifier(this.processingService.getContentNotifier());
         startCameraSource();
 
         String[] permissions = new String[]{
@@ -274,7 +292,7 @@ public class MainActivity extends Activity {
         this.showToast(message);
     }
 
-    @OnClick(R.id.btnTry)
+//    @OnClick(R.id.btnTry)
     void retryImage() {
         if (this.bitmap != null) {
             processingService.fullTextRecognition(this.bitmap);
@@ -286,7 +304,6 @@ public class MainActivity extends Activity {
         CameraSource.PictureCallback picture = (byte[] data) -> {
             //make a new picture file
             File pictureFile = getOutputMediaFile();
-            System.out.println("here-------------------------------------------------------------");
 
             if (pictureFile == null) {
                 return;
@@ -308,7 +325,7 @@ public class MainActivity extends Activity {
         return picture;
     }
 
-    @OnClick(R.id.buttonCapture)
+//    @OnClick(R.id.buttonCapture)
     void imageCapture() {
         try {
             //openCamera(CameraInfo.CAMERA_FACING_BACK);
@@ -345,6 +362,7 @@ public class MainActivity extends Activity {
         File mediaFile;
         //and make a media file:
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
+
 
         return mediaFile;
     }
@@ -404,7 +422,8 @@ public class MainActivity extends Activity {
         ivImage.setImageBitmap(bm);
 
         if (bm != null) {
-            processingService.fullTextRecognition(bm);
+            displayPreview(bm);
+//            processingService.fullTextRecognition(bm);
         }
 
         return bm;
@@ -445,6 +464,215 @@ public class MainActivity extends Activity {
 
     }
 
+    private void displayPreview(Bitmap bitmap) {
+//        Context mContext = MainActivity.this;
+//        LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
+//
+//        LinearLayout linearLayout = findViewById(R.id.LinearLayout1);
+//
+//        assert inflater != null;
+//        View customView = inflater.inflate(R.layout.popup_preview, null);
+//        //https://stackoverflow.com/questions/4933612/how-to-convert-coordinates-of-the-image-view-to-the-coordinates-of-the-bitmap
+//        mPopupWindow = new PopupWindow(
+//                customView,
+//                RelativeLayout.LayoutParams.FILL_PARENT,
+//                RelativeLayout.LayoutParams.FILL_PARENT
+//        );
+//        mPopupWindow.setOutsideTouchable(true);
+//        mPopupWindow.setFocusable(true);
+//
+//        // Set an elevation value for popup window
+//        // Call requires API level 21
+//        if (Build.VERSION.SDK_INT >= 21) {
+//            mPopupWindow.setElevation(5.0f);
+//        }
+//
+//        ImageButton closeButton = customView.findViewById(R.id.ib_close);
+//        ImageView imageView = customView.findViewById(R.id.popupView);
+//
+//
+//        closeButton.setOnClickListener((View view) -> {
+//            mPopupWindow.dismiss();
+//        });
+//
+//        List<FirebaseVisionText.Element> elementList = new ArrayList<>();
+//
+//
+//        mPopupWindow.showAtLocation(linearLayout, Gravity.CENTER, 0, 0);
+//
+//        FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(bitmap);
+//        FirebaseVisionTextRecognizer textRecognizer = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
+//
+//        DataExtractionDTO dataExtractionDTO = new DataExtractionDTO();
+//
+//        Log.d("TIME", "Processing Started " + new Date());
+//        textRecognizer.processImage(image)
+//                .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
+//                    @Override
+//                    public void onSuccess(FirebaseVisionText result) {
+//                        // Task completed successfully
+//                        List<Point[]> textBlocksList = new ArrayList<>();
+//                        FirebaseVisionText.TextBlock selectedTextBlock = null;
+//                        Point[] selectedBlock;
+//                        Point[] currentBlock;
+//                        String resultText = result.getText();
+//                        HashMap<Integer, List<FirebaseVisionText.TextBlock>> map = new HashMap<>();
+//
+//                        System.out.println(resultText);
+//
+//                        for (FirebaseVisionText.TextBlock block : result.getTextBlocks()) {
+//                            int index = block.getCornerPoints()[0].y;
+//                            List<FirebaseVisionText.TextBlock> list;
+//                            if (map.get(index) == null) {
+//                                list = new ArrayList<>();
+//                            } else {
+//                                list = map.get(index);
+//                            }
+//
+//
+//                        }
+//
+//                        List<Integer> keySet = new ArrayList<>(map.keySet());
+//                        Collections.sort(keySet);
+//
+//                        if (!keySet.isEmpty()) {
+//                            int bottomY = keySet.get(keySet.size() - 1);
+//                            List<FirebaseVisionText.TextBlock> list = map.get(bottomY);
+//                            int listSize = list.size();
+//                            int selectedWordIndex = 0;
+//
+//                            selectedTextBlock = list.get(0);
+//                            resultText = selectedTextBlock.getText();
+//                        }
+//
+//                        Mat matrix = new Mat();
+//                        Utils.bitmapToMat(bitmap, matrix);
+//                        final int lineThickness = 10;
+//                        Scalar CONTOUR_COLOR_HIGHLIGHT = new Scalar(255, 0, 0, 255);
+//
+//
+//                        Log.d("TIME", "Processing Finished " + new Date());
+//                        for (FirebaseVisionText.TextBlock block : result.getTextBlocks()) {
+//                            String blockText = block.getText();
+//                            Float blockConfidence = block.getConfidence();
+//                            List<RecognizedLanguage> blockLanguages = block.getRecognizedLanguages();
+//                            Point[] blockCornerPoints = block.getCornerPoints();
+//                            Rect blockFrame = block.getBoundingBox();
+//
+//                            if (selectedTextBlock == null) {
+//                                selectedTextBlock = block;
+//                            } else {
+//                                selectedBlock = selectedTextBlock.getCornerPoints();
+//                                currentBlock = block.getCornerPoints();
+//                                Point sp0 = selectedBlock[0], sp1 = selectedBlock[2];
+//                                Point p0 = currentBlock[0], p1 = currentBlock[2];
+//
+//                            }
+//
+//
+//                            for (FirebaseVisionText.Line line : block.getLines()) {
+//                                String lineText = line.getText();
+//                                Float lineConfidence = line.getConfidence();
+//                                List<RecognizedLanguage> lineLanguages = line.getRecognizedLanguages();
+//                                Point[] lineCornerPoints = line.getCornerPoints();
+//                                Rect lineFrame = line.getBoundingBox();
+//                                for (FirebaseVisionText.Element element : line.getElements()) {
+//                                    String elementText = element.getText();
+//                                    Float elementConfidence = element.getConfidence();
+//                                    List<RecognizedLanguage> elementLanguages = element.getRecognizedLanguages();
+//                                    Point[] elementCornerPoints = element.getCornerPoints();
+//                                    Rect elementFrame = element.getBoundingBox();
+//                                    elementList.add(element);
+//
+//                                    double leftx = elementCornerPoints[0].x,
+//                                            lefty = elementCornerPoints[0].y,
+//                                            rightx = elementCornerPoints[2].x,
+//                                            righty = elementCornerPoints[2].y;
+//
+//                                    if (leftx > elementCornerPoints[3].x) {
+//                                        leftx = elementCornerPoints[3].x;
+//                                    }
+//                                    if (lefty > elementCornerPoints[1].y) {
+//                                        lefty = elementCornerPoints[1].y;
+//                                    }
+//
+//                                    if (rightx < elementCornerPoints[1].x) {
+//                                        rightx = elementCornerPoints[1].x;
+//                                    }
+//                                    if (righty < elementCornerPoints[3].y) {
+//                                        righty = elementCornerPoints[3].y;
+//                                    }
+//
+//                                    org.opencv.core.Point pointA = new org.opencv.core.Point(leftx, lefty),
+//                                            pointB = new org.opencv.core.Point(rightx, righty);
+//                                    Imgproc.rectangle(matrix, pointA, pointB, CONTOUR_COLOR_HIGHLIGHT, lineThickness);
+//                                }
+//                            }
+//                        }
+//
+//                        Bitmap processedBitmap = Bitmap.createBitmap(bitmap.getWidth(), bitmap.getHeight(), bitmap.getConfig());
+//                        Utils.matToBitmap(matrix, processedBitmap);
+//
+//                        imageView.setImageBitmap(processedBitmap);
+//                        imageView.setOnTouchListener(new View.OnTouchListener() {
+//                            @Override
+//                            public boolean onTouch(View v, MotionEvent event) {
+//                                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+//                                    textView.setText("Touch coordinates : " +
+//                                            String.valueOf(event.getX()) + "x" + String.valueOf(event.getY()));
+//                                    System.out.println("----------------------" + event.getAction());
+//                                    System.out.println(String.valueOf(event.getX()) + "x" + String.valueOf(event.getY()));
+//                                    double tx = event.getX(), ty = event.getY();
+//                                    for (FirebaseVisionText.Element element : elementList) {
+//                                        Point[] elementCornerPoints = element.getCornerPoints();
+//                                        double leftx = elementCornerPoints[0].x,
+//                                                lefty = elementCornerPoints[0].y,
+//                                                rightx = elementCornerPoints[2].x,
+//                                                righty = elementCornerPoints[2].y;
+//
+//                                        if (leftx > elementCornerPoints[3].x) {
+//                                            leftx = elementCornerPoints[3].x;
+//                                        }
+//                                        if (lefty > elementCornerPoints[1].y) {
+//                                            lefty = elementCornerPoints[1].y;
+//                                        }
+//
+//                                        if (rightx < elementCornerPoints[1].x) {
+//                                            rightx = elementCornerPoints[1].x;
+//                                        }
+//                                        if (righty < elementCornerPoints[3].y) {
+//                                            righty = elementCornerPoints[3].y;
+//                                        }
+//
+//                                        if (leftx <= tx && rightx >= tx && lefty <= ty && righty >= ty) {
+//                                            System.out.println("---------------------------------");
+//                                            System.out.println(element.getText());
+//                                            System.out.println("---------------------------------");
+//                                        }
+//
+//                                    }
+//                                }
+//
+//                                return true;
+//                            }
+//                        });
+//                    }
+//                })
+//                .addOnFailureListener(
+//                        new OnFailureListener() {
+//                            @Override
+//                            public void onFailure(Exception e) {
+//                                System.out.println("Image Recognition Failed.");
+//                                Log.d("ERROR", e.getMessage());
+//                                // Task failed with an exception
+//                                // ...
+//
+//                            }
+//                        });
+
+
+    }
+
     private void showToast(String text) {
         Toast.makeText(myContext, text, Toast.LENGTH_LONG).show();
     }
@@ -457,6 +685,7 @@ public class MainActivity extends Activity {
         // on screen.
         TextRecognizer textRecognizer = new TextRecognizer.Builder(context).build();
         textRecognizer.setProcessor(new OcrDetectorProcessor(ocrGraphicOverlay));
+
 
         if (!textRecognizer.isOperational()) {
             // Note: The first time that an app using a Vision API is installed on a
